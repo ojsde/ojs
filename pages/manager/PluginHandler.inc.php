@@ -30,7 +30,7 @@ class PluginHandler extends ManagerHandler {
 	 */
 	function plugins($args, &$request) {
 		$templateMgr =& TemplateManager::getManager($request);
-		$this->validate();
+		$this->validate(null, $request);
 
 		$this->setupTemplate($request, true);
 		$templateMgr->assign('pageTitle', 'manager.plugins.pluginManagement');
@@ -62,7 +62,7 @@ class PluginHandler extends ManagerHandler {
 		$plugin = array_shift($args);
 		$verb = array_shift($args);
 
-		$this->validate();
+		$this->validate(null, $request);
 		$this->setupTemplate($request, true);
 
 		$plugins =& PluginRegistry::loadCategory($category);
