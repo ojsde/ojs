@@ -13,6 +13,7 @@
 	<p>TODO: Insert privacy information (to be provided by FU Berlin).</p>
 	{if $hasOptedOut}
 		<p>{translate key="plugins.generic.oas.optout.done"}</p>
+		<input type="submit" name="opt-in" class="button defaultButton" value="{translate key="plugins.generic.oas.optin"}"/>
 	{else}
 		<p>{translate key="plugins.generic.oas.optout.cookie"}</p>
 		<input type="submit" name="opt-out" class="button defaultButton" value="{translate key="plugins.generic.oas.optout"}"/>

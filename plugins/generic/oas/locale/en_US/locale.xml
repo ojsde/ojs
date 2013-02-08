@@ -16,10 +16,11 @@
 	<message key="plugins.generic.oas.report.displayName">OA-S Reporting</message>
 	<message key="plugins.reports.oas.report.description">This plugin implements reports based on OA-S metrics.</message>
 	
+	<message key="plugins.generic.oas.optin">Opt In</message>
 	<message key="plugins.generic.oas.optout">Opt Out</message>
 	<message key="plugins.generic.oas.optout.description">Open Access Statistics (OA-S) Privacy Information</message>
 	<message key="plugins.generic.oas.optout.displayName">OA-S Privacy Information</message>
-	<message key="plugins.generic.oas.optout.done">You successfully opted out from usage statistics collection. While you see this message no statistics will be collected from your usage of this site.</message>
+	<message key="plugins.generic.oas.optout.done">You successfully opted out from usage statistics collection. While you see this message no statistics will be collected from your usage of this site. Click the below button to revert your decision.</message>
 	<message key="plugins.generic.oas.optout.title">Privacy Information</message>
 	<message key="plugins.generic.oas.optout.link">Read more...</message>
 	<message key="plugins.generic.oas.optout.shortDesc"><![CDATA[We log anonymous usage statistics. Please read the <a href="{$privacyInfo}">privacy information</a> for details.]]></message>

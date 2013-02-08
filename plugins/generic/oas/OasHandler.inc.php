@@ -38,9 +38,15 @@ class OasHandler extends Handler {
 		$this->validate(null, $request);
 
 		// Check whether this is an opt-out request.
-		if ($request->isPost() && $request->getUserVar('opt-out')) {
-			// Set a cookie that is valid for one year.
-			$request->setCookieVar('oas-opt-out', true, time() + 60*60*24*365);
+		if ($request->isPost()) {
+			if ($request->getUserVar('opt-out')) {
+				// Set a cookie that is valid for one year.
+				$request->setCookieVar('oas-opt-out', true, time() + 60*60*24*365);
+			}
+			if ($request->getUserVar('opt-in')) {
+				// Delete the opt-out cookie.
+				$request->setCookieVar('oas-opt-out', false, time() - 60*60);
+			}
 		}
 
 		// Display the privacy info page.
