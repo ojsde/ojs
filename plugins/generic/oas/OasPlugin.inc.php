@@ -333,7 +333,7 @@ class OasPlugin extends GenericPlugin {
 		}
 
 		// Canonical URL.
-		if ($assocType == ASSOC_TYPE_ISSUE) {
+		if ($assocType == ASSOC_TYPE_ISSUE_GALLEY) {
 			$canonicalUrlPage = 'issue';
 		} else {
 			$canonicalUrlPage = 'article';
@@ -374,7 +374,7 @@ class OasPlugin extends GenericPlugin {
 		$userAgent = $request->getUserAgent();
 
 		// HTTP referrer.
-		$referrer = $_SERVER['HTTP_REFERER'];
+		$referrer = (isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : null);
 
 		// User and roles.
 		$user = $request->getUser();
