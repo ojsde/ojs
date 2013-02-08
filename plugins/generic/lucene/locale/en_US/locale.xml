@@ -14,14 +14,16 @@
 	<message key="plugins.generic.lucene.displayName">Lucene Search Plugin</message>
 	<message key="plugins.generic.lucene.description">The Lucene plugin provides multi-language support, improved search result relevance, faster indexing, better scalability and more.</message>
 
-	<message key="plugins.generic.lucene.faceting.title">refine your search</message>
-	<message key="plugins.generic.lucene.faceting.discipline">Discipline</message>
-	<message key="plugins.generic.lucene.faceting.subject">Keyword</message>
-	<message key="plugins.generic.lucene.faceting.type">Method/Approach</message>
-	<message key="plugins.generic.lucene.faceting.coverage">Coverage</message>
-	<message key="plugins.generic.lucene.faceting.journalTitle">Journal</message>
 	<message key="plugins.generic.lucene.faceting.authors">Author</message>
+	<message key="plugins.generic.lucene.faceting.coverage">Coverage</message>
+	<message key="plugins.generic.lucene.faceting.description">Faceting Block Plugin for Lucene</message>
+	<message key="plugins.generic.lucene.faceting.discipline">Discipline</message>
+	<message key="plugins.generic.lucene.faceting.displayName">Lucene Faceting</message>
+	<message key="plugins.generic.lucene.faceting.journalTitle">Journal</message>
 	<message key="plugins.generic.lucene.faceting.publicationDate">Publication Date</message>
+	<message key="plugins.generic.lucene.faceting.subject">Keyword</message>
+	<message key="plugins.generic.lucene.faceting.title">refine your search</message>
+	<message key="plugins.generic.lucene.faceting.type">Method/Approach</message>
 	
 	<message key="plugins.generic.lucene.message.coreNotFound">The requested core '{$core}' was not found on the Solr server. Is it online?</message>
 	<message key="plugins.generic.lucene.message.indexingIncomplete">An error occurred while indexing: Processed {$numProcessed} out of a batch of {$batchCount} ({$numDeleted} deleted documents in this batch).</message>

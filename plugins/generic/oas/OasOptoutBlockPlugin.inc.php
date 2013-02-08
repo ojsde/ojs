@@ -51,14 +51,14 @@ class OasOptoutBlockPlugin extends BlockPlugin {
 	 * @see PKPPlugin::getDisplayName()
 	 */
 	function getDisplayName() {
-		return __('plugins.generic.oas');
+		return __('plugins.generic.oas.optout.displayName');
 	}
 
 	/**
 	 * @see PKPPlugin::getDescription()
 	 */
 	function getDescription() {
-		return __('plugins.generic.oas.description');
+		return __('plugins.generic.oas.optout.description');
 	}
 
 	/**
