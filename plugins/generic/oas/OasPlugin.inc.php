@@ -268,7 +268,7 @@ class OasPlugin extends GenericPlugin {
 					if ($galley->isHTMLGalley() || $galley->getRemoteURL()) {
 						$pubObject = $galley;
 						$assocType = ASSOC_TYPE_GALLEY;
-						$canonicalUrlParams = array($article->getId(), $pubObject->getBestGalleyId($journal));
+						$canonicalUrlParams = array($article->getBestArticleId(), $pubObject->getBestGalleyId($journal));
 					} else {
 						// This is an access to an intermediary galley page which we
 						// do not count.
@@ -291,7 +291,7 @@ class OasPlugin extends GenericPlugin {
 				$assocType = ASSOC_TYPE_GALLEY;
 				$canonicalUrlOp = 'download';
 				$article = $args[0];
-				$canonicalUrlParams = array($article->getId(), $pubObject->getBestGalleyId($journal));
+				$canonicalUrlParams = array($article->getBestArticleId(), $pubObject->getBestGalleyId($journal));
 				break;
 
 			// Supplementary file.
@@ -300,7 +300,7 @@ class OasPlugin extends GenericPlugin {
 				$assocType = ASSOC_TYPE_SUPP_FILE;
 				$canonicalUrlOp = 'downloadSuppFile';
 				$article = $args[0];
-				$canonicalUrlParams = array($article->getId(), $pubObject->getBestSuppFileId($journal));
+				$canonicalUrlParams = array($article->getBestArticleId(), $pubObject->getBestSuppFileId($journal));
 				break;
 
 			// Issue galley.
@@ -309,7 +309,7 @@ class OasPlugin extends GenericPlugin {
 				$assocType = ASSOC_TYPE_ISSUE_GALLEY;
 				$canonicalUrlOp = 'download';
 				$issue = $args[0];
-				$canonicalUrlParams = array($issue->getId(), $pubObject->getBestGalleyId($journal));
+				$canonicalUrlParams = array($issue->getBestIssueId(), $pubObject->getBestGalleyId($journal));
 				break;
 
 			default:
