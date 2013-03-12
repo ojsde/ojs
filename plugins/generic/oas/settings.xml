@@ -56,5 +56,11 @@
 		<name>oaiPassword</name>
 		<value></value>
 	</setting>
+	
+	<!-- Event ID generation -->
+	<setting type="string">
+		<name>uniqueSiteId</name>
+		<value></value>
+	</setting>
 </plugin_settings>
 

@@ -282,6 +282,7 @@ class OasPlugin extends GenericPlugin {
 						$pubObject = $galley;
 						$assocType = ASSOC_TYPE_GALLEY;
 						$canonicalUrlParams = array($article->getBestArticleId(), $pubObject->getBestGalleyId($journal));
+						$idParams = array('a' . $article->getId(), 'g' . $pubObject->getId());
 					} else {
 						// This is an access to an intermediary galley page which we
 						// do not count.
@@ -291,6 +292,7 @@ class OasPlugin extends GenericPlugin {
 					$pubObject = $article;
 					$assocType = ASSOC_TYPE_ARTICLE;
 					$canonicalUrlParams = array($pubObject->getBestArticleId($journal));
+					$idParams = array('a' . $pubObject->getId());
 				}
 				// The article and HTML/remote galley pages do not download anything.
 				$downloadSuccess = true;
@@ -305,6 +307,7 @@ class OasPlugin extends GenericPlugin {
 				$canonicalUrlOp = 'download';
 				$article = $args[0];
 				$canonicalUrlParams = array($article->getBestArticleId(), $pubObject->getBestGalleyId($journal));
+				$idParams = array('a' . $article->getId(), 'g' . $pubObject->getId());
 				break;
 
 			// Supplementary file.
@@ -314,6 +317,7 @@ class OasPlugin extends GenericPlugin {
 				$canonicalUrlOp = 'downloadSuppFile';
 				$article = $args[0];
 				$canonicalUrlParams = array($article->getBestArticleId(), $pubObject->getBestSuppFileId($journal));
+				$idParams = array('a' . $article->getId(), 's' . $pubObject->getId());
 				break;
 
 			// Issue galley.
@@ -323,6 +327,7 @@ class OasPlugin extends GenericPlugin {
 				$canonicalUrlOp = 'download';
 				$issue = $args[0];
 				$canonicalUrlParams = array($issue->getBestIssueId(), $pubObject->getBestGalleyId($journal));
+				$idParams = array('i' . $issue->getId(), 'ig' . $pubObject->getId());
 				break;
 
 			default:
@@ -356,7 +361,23 @@ class OasPlugin extends GenericPlugin {
 		);
 
 		// Public identifiers.
-		$identifiers = array();
+		// 1) A unique OJS-internal ID that will help us to easily attribute
+		//    statistics to a specific publication object.
+		array_unshift($idParams, 'j' . $journal->getId());
+		$siteId = $this->getSetting(0, 'uniqueSiteId');
+		if (empty($siteId)) {
+			// Create a globally unique, persistent site ID
+			// so that we can uniquely identify publication
+			// objects from this site, even if the URL or any
+			// other externally influenced information changes.
+			$siteId = uniqid();
+			$this->updateSetting(0, 'uniqueSiteId', $siteId);
+		}
+		array_unshift($idParams, $siteId);
+		$ojsId = 'ojs:' . implode('-', $idParams);
+		$identifiers = array('other::ojs' => $ojsId);
+
+		// 2) Standardized public identifiers, e.g. DOI, URN, etc.
 		if (!is_a($pubObject, 'IssueGalley')) {
 			$pubIdPlugins = PluginRegistry::loadCategory('pubIds', true, $journal->getId());
 			if (is_array($pubIdPlugins)) {
