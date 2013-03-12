@@ -156,7 +156,9 @@ class OasPlugin extends GenericPlugin {
 
 					// Update statistics data.
 					if ($request->getUserVar('updateStatistics')) {
-						$this->_updateStatistics();
+						if (!$this->_updateStatistics()) {
+							$templateMgr->assign('updateStatisticsMessage', 'Error while updating statistics');
+						}
 					}
 
 					// Re-display the settings page after executing
@@ -580,42 +582,40 @@ class OasPlugin extends GenericPlugin {
 
 	/**
 	 * Retrieve statistics data from the OA-S server.
+	 *
+	 * @return boolean True, if the update was successful, otherwise false.
 	 */
 	function _updateStatistics() {
+		// Instantiate the file loader.
+		$this->import('classes.task.OasFileLoader');
+		$fileLoader = new OasFileLoader();
+
 		// Make sure that the folder structure to handle file downloads is
 		// in place.
-		$this->_ensureLoadFolderStructure();
+		if (!$fileLoader->checkFolderStructure(true)) return false;
 
 		// Download new files from the OA-S server.
-		$this->_pullStatisticsFiles();
+		if (!$this->_pullStatisticsFiles($fileLoader)) return false;
 
 		// Load files.
-		$this->_loadStatisticsFiles();
-	}
+		if (!$fileLoader->execute()) return false;
 
-	/**
-	 * Check whether the staging, processing, archive and
-	 * reject folders for statistics file handling are present.
-	 *
-	 * If not: install them.
-	 */
-	function _ensureLoadFolderStructure() {
-
+		return true;
 	}
 
 	/**
 	 * Poll the OA-S server for new statistics files and
 	 * download them.
+	 * @param $fileLoader OasFileLoader
+	 * @return boolean
 	 */
-	function _pullStatisticsFiles() {
-
-	}
-
-	/**
-	 * Load new statistics files into the metrics database.
-	 */
-	function _loadStatisticsFiles() {
-
+	function _pullStatisticsFiles($fileLoader) {
+		// TODO: implement.
+		// Dummy implementation as long as we don't have real data on the
+		// statistics server: take sample file from archive and move it
+		// to staging.
+		if (is_readable($fileLoader->getStagePath() . '/test.csv')) return true;
+		return rename($fileLoader->getArchivePath() . '/test.csv', $fileLoader->getStagePath() . '/test.csv');
 	}
 
 	/**

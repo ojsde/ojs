@@ -80,15 +80,26 @@
 		<p><span class="formRequired">{translate key="common.requiredField"}</span></p>
 		<br/>
 		
+		<a id="statisticsAdmin"> </a>
 		<h3>{translate key="plugins.generic.oas.settings.admin"}</h3>
+		<script type="text/javascript">
+			function jumpToAdminAnchor() {ldelim}
+				$form = $('#oasSettings form');
+				// Return directly to the rebuild index section.
+				$form.attr('action', $form.attr('action') + '#statisticsAdmin');
+				return true;
+			{rdelim}
+		</script>
 
 		<div id="description"><p>{translate key="plugins.generic.oas.settings.adminDescription"}</p></div>
 		<div class="separator"></div>
 		<br />
 		
-		<input type="submit" name="updateStatistics" value="{translate key="plugins.generic.oas.settings.adminUpdate"}" class="action" />
-		
+		<input type="submit" name="updateStatistics" value="{translate key="plugins.generic.oas.settings.adminUpdate"}" onclick="jumpToAdminAnchor()" class="action" />
 		<br/>
+		{$updateStatisticsMessage}
+		<br/>
+		
 	</form>
 </div>
 {include file="common/footer.tpl"}
