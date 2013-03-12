@@ -243,13 +243,14 @@ class OasPlugin extends GenericPlugin {
 	 */
 	function startUsageEvent($hookName, $args) {
 		$request = $this->getRequest();
+		$router = $request->getRouter(); /* @var $router PageRouter */
 
 		// Display the privacy information whenever we are on
 		// an article or issue page (i.e. whenever usage info
 		// may be collected).
 		if ($hookName == 'TemplateManager::display') {
 			$templateMgr = $args[0];
-			$page = $request->getRequestedPage();
+			$page = $router->getRequestedPage($request);
 			if ($page == 'article' || $page == 'issue') {
 				$templateMgr->assign('oasDisplayPrivacyInfo', true);
 			}
@@ -264,7 +265,7 @@ class OasPlugin extends GenericPlugin {
 		}
 
 		// Check whether we are in journal context.
-		$journal = $request->getJournal();
+		$journal = $router->getContext($request);
 		if (!$journal) return false;
 
 		// Prepare request information.
@@ -274,7 +275,7 @@ class OasPlugin extends GenericPlugin {
 			// Article abstract, HTML galley and remote galley.
 			case 'TemplateManager::display':
 				// We are only interested in access to the article abstract/galley view page.
-				$op = $request->getRequestedOp();
+				$op = $router->getRequestedOp($request);
 				if ($page != 'article' || !($op == 'view' || $op == 'articleView')) return false;
 
 				$galley = $templateMgr->get_template_vars('galley'); /* @var $galley ArticleGalley */
@@ -341,14 +342,13 @@ class OasPlugin extends GenericPlugin {
 		$time = Core::getCurrentDate();
 
 		// Actual document size, MIME type.
-		$router = $request->getRouter();
 		if ($assocType == ASSOC_TYPE_ARTICLE) {
 			// Article abstract.
 			$docSize = 0;
 			$mimeType = 'text/html';
 		} else {
 			// Files.
-			$docSize = $pubObject->getFileSize();
+			$docSize = (int)$pubObject->getFileSize();
 			$mimeType = $pubObject->getFileType();
 		}
 
@@ -482,6 +482,7 @@ class OasPlugin extends GenericPlugin {
 
 		// Stage the usage event.
 		$this->_currentEventId = $this->_oasEventStagingDao->stageUsageEvent($usageEvent, $salt);
+		return false;
 	}
 
 	/**
@@ -574,8 +575,10 @@ class OasPlugin extends GenericPlugin {
 	function _registerDao() {
 		// Prefetch the DAO so that it is available even after download finishes.
 		// (OJS will clear the registry before downloading files.)
-		$this->import('OasEventStagingDAO');
-		$this->_oasEventStagingDao = new OasEventStagingDAO();
+		if (!is_a($this->_oasEventStagingDao, 'OasEventStagingDAO')) {
+			$this->import('OasEventStagingDAO');
+			$this->_oasEventStagingDao = new OasEventStagingDAO();
+		}
 		// Register the DAO.
 		DAORegistry::registerDAO('OasEventStagingDAO', $this->_oasEventStagingDao);
 	}
@@ -624,18 +627,19 @@ class OasPlugin extends GenericPlugin {
 	 */
 	function _setBreadcrumbs() {
 		$request = $this->getRequest();
+		$router = $request->getRouter();
 		$templateMgr = TemplateManager::getManager($request);
 		$pageCrumbs = array(
 			array(
-				$request->url(null, 'user'),
+				$router->url($request, null, 'user'),
 				'navigation.user'
 			),
 			array(
-				$request->url('index', 'admin'),
+				$router->url($request, 'index', 'admin'),
 				'user.role.siteAdmin'
 			),
 			array(
-				$request->url(null, 'manager', 'plugins'),
+				$router->url($request, null, 'manager', 'plugins'),
 				'manager.plugins'
 			)
 		);

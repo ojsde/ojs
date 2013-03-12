@@ -148,7 +148,7 @@ class OasEventStagingDAO extends PKPOAIDAO {
 		$hashedC = $this->_hashIp($this->_getCClassNet($usageEvent['ip']), $salt);
 
 		// Never store unhashed IPs!
-		if ($hashedIp === false || $hashedC === false) return false;
+		if ($hashedIp === false || $hashedC === false) return null;
 
 		$this->update(
 			sprintf(
