@@ -150,8 +150,17 @@ class OasPlugin extends GenericPlugin {
 						$form->display($request);
 					}
 				} else {
+					// Re-init data.
 					$this->_setBreadCrumbs();
 					$form->initData();
+
+					// Update statistics data.
+					if ($request->getUserVar('updateStatistics')) {
+						$this->_updateStatistics();
+					}
+
+					// Re-display the settings page after executing
+					// an administrative task.
 					$form->display($request);
 				}
 				return true;
@@ -546,6 +555,46 @@ class OasPlugin extends GenericPlugin {
 		$this->_oasEventStagingDao = new OasEventStagingDAO();
 		// Register the DAO.
 		DAORegistry::registerDAO('OasEventStagingDAO', $this->_oasEventStagingDao);
+	}
+
+	/**
+	 * Retrieve statistics data from the OA-S server.
+	 */
+	function _updateStatistics() {
+		// Make sure that the folder structure to handle file downloads is
+		// in place.
+		$this->_ensureLoadFolderStructure();
+
+		// Download new files from the OA-S server.
+		$this->_pullStatisticsFiles();
+
+		// Load files.
+		$this->_loadStatisticsFiles();
+	}
+
+	/**
+	 * Check whether the staging, processing, archive and
+	 * reject folders for statistics file handling are present.
+	 *
+	 * If not: install them.
+	 */
+	function _ensureLoadFolderStructure() {
+
+	}
+
+	/**
+	 * Poll the OA-S server for new statistics files and
+	 * download them.
+	 */
+	function _pullStatisticsFiles() {
+
+	}
+
+	/**
+	 * Load new statistics files into the metrics database.
+	 */
+	function _loadStatisticsFiles() {
+
 	}
 
 	/**

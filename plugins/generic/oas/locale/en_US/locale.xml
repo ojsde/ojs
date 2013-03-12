@@ -32,6 +32,12 @@
 	</message>
 
 	<message key="plugins.generic.oas.settings">Settings</message>
+	<message key="plugins.generic.oas.settings.admin">OA-S Plugin Administration</message>
+	<message key="plugins.generic.oas.settings.adminDescription">
+		You have got two options to download aggregate statistics from the OA-S server: You can either set up a cronjob (see README in the plugin directory) or
+		update statistics manually by clicking the button below.
+	</message>
+	<message key="plugins.generic.oas.settings.adminUpdate">Update Statistics</message>
 	<message key="plugins.generic.oas.settings.oaiDescription">
 		Your usage statistics will be transferred to OA-S via a so-called "OAI-PMH" interface. You have to protect that interface
 		from unauthorized access by setting a self-chosen password. This is necessary to guarantee your users' privacy. When registering

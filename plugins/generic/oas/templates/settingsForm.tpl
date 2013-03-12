@@ -79,6 +79,16 @@
 		<br/>
 		<p><span class="formRequired">{translate key="common.requiredField"}</span></p>
 		<br/>
+		
+		<h3>{translate key="plugins.generic.oas.settings.admin"}</h3>
+
+		<div id="description"><p>{translate key="plugins.generic.oas.settings.adminDescription"}</p></div>
+		<div class="separator"></div>
+		<br />
+		
+		<input type="submit" name="updateStatistics" value="{translate key="plugins.generic.oas.settings.adminUpdate"}" class="action" />
+		
+		<br/>
 	</form>
 </div>
 {include file="common/footer.tpl"}
