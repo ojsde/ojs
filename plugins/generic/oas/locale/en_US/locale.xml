@@ -16,6 +16,9 @@
 	<message key="plugins.generic.oas.report.displayName">OA-S Reporting</message>
 	<message key="plugins.reports.oas.report.description">This plugin implements reports based on OA-S metrics.</message>
 	
+	<message key="plugins.reports.oas.metricType.counter">OA-S/COUNTER</message>
+	<message key="plugins.reports.oas.metricType.counter.full">Open Access Statistics: COUNTER</message>
+	
 	<message key="plugins.generic.oas.optin">Opt In</message>
 	<message key="plugins.generic.oas.optout">Opt Out</message>
 	<message key="plugins.generic.oas.optout.description">Open Access Statistics (OA-S) Privacy Information</message>

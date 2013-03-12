@@ -15,6 +15,8 @@
 
 import('classes.plugins.ReportPlugin');
 
+define('OAS_METRIC_TYPE_COUNTER', 'oas::counter');
+
 class OasReportPlugin extends ReportPlugin {
 
 	/**
@@ -58,28 +60,38 @@ class OasReportPlugin extends ReportPlugin {
 	 * @see ReportPlugin::getMetrics()
 	 */
 	function getMetrics($metricType = null, $columns = null, $filters = null, $orderBy = null, $range = null) {
-		assert(false); // TODO: implement
+		// Validate the metric type.
+		if (!(is_scalar($metricType) || count($metricType) === 1)) return null;
+		if (is_array($metricType)) $metricType = array_pop($metricType);
+		if ($metricType !== OAS_METRIC_TYPE_COUNTER) return null;
+
+		// This plug-in uses the MetricsDAO to store metrics. So we simply
+		// delegate there.
+		$metricsDao = DAORegistry::getDAO('MetricsDAO'); /* @var $metricsDao MetricsDAO */
+		return $metricsDao->getMetrics($metricType, $columns, $filters, $orderBy, $range);
 	}
 
 	/**
 	 * @see ReportPlugin::getMetricTypes()
 	 */
 	function getMetricTypes() {
-		assert(false); // TODO: implement
+		return array(OAS_METRIC_TYPE_COUNTER);
 	}
 
 	/**
 	 * @see ReportPlugin::getMetricDisplayType()
 	 */
 	function getMetricDisplayType($metricType) {
-		assert(false); // TODO: implement
+		if ($metricType !== OAS_METRIC_TYPE_COUNTER) return null;
+		return __('plugins.reports.oas.metricType.counter');
 	}
 
 	/**
 	 * @see ReportPlugin::getMetricFullName()
 	 */
 	function getMetricFullName($metricType) {
-		assert(false); // TODO: implement
+		if ($metricType !== OAS_METRIC_TYPE_COUNTER) return null;
+		return __('plugins.reports.oas.metricType.counter.full');
 	}
 }
 

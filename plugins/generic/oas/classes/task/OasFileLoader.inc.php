@@ -47,14 +47,14 @@ class OasFileLoader extends FileLoader {
 
 		// (Re-)Load the file.
 		$headerLine = fgetcsv($handle, 0, ';');
-		$id = 0;
+		$id = 1;
 		while ($nextLine = fgetcsv($handle, 0, ';')) {
 			// Extract one record.
 			$rawData = array_combine($headerLine, $nextLine);
 
 			// Transform the record.
 			$record = array('load_id' => $loadId);
-			$record['assoc_type'] = ASSOC_TYPE_ARTICLE; // TODO: dummy
+			$record['assoc_type'] = ASSOC_TYPE_GALLEY; // TODO: dummy
 			$record['assoc_id'] = $id++; // TODO: dummy
 			$record['day'] = str_replace('-', '', $rawData['date']);
 			$record['metric_type'] = 'oas::counter';
