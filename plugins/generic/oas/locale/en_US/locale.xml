@@ -43,6 +43,15 @@
 	<message key="plugins.generic.oas.settings.oaiPasswordRequired">Please enter a password that protects your statistics data from unauthorized access.</message>
 	<message key="plugins.generic.oas.settings.oaiSettings">Statistics interface settings</message>
 	<message key="plugins.generic.oas.settings.oasSettings">OA-S Plugin: Settings</message>
+	<message key="plugins.generic.oas.settings.privacyDescription">
+		Transferring statistics data to OA-S may have direct or indirect implications for your users' privacy. Please check whether
+		you are liable to provide a privacy message to your end users. Notwithstanding other legislation this is usually the case
+		if you have to comply with German privacy legislation. This message will appear when users click on the "privacy information"
+		link that automatically comes with this plug-in.
+	</message>
+	<message key="plugins.generic.oas.settings.privacyMessage">Privacy Message</message>
+	<message key="plugins.generic.oas.settings.privacyMessageInstructions">Please enter a privacy message.</message>
+	<message key="plugins.generic.oas.settings.privacySettings">Privacy settings</message>
 	<message key="plugins.generic.oas.settings.saltApiDescription"><![CDATA[
 		The OA-S plugin requires access to a SALT server to pseudonimize IP addresses. After registering your OJS installation with the OA-S project you'll
 		receive a username and password from University Library Saarbrücken (SULB). Please enter these login credentials here so that you are able to use the

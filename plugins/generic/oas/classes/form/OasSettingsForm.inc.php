@@ -103,7 +103,7 @@ class OasSettingsForm extends Form {
 	 */
 	function _getFormFields() {
 		return array(
-			'saltApiUsername'
+			'saltApiUsername', 'privacyMessage'
 		);
 	}
 }

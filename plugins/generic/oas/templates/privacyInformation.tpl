@@ -10,7 +10,7 @@
 {include file="common/header.tpl"}
 
 <form action="{url}" method="POST">
-	<p>TODO: Insert privacy information (to be provided by FU Berlin).</p>
+	{if !empty($privacyMessage)}<p>{$privacyMessage}</p>{/if}
 	{if $hasOptedOut}
 		<p>{translate key="plugins.generic.oas.optout.done"}</p>
 		<input type="submit" name="opt-in" class="button defaultButton" value="{translate key="plugins.generic.oas.optin"}"/>

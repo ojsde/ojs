@@ -17,6 +17,12 @@
 		<value>false</value>
 	</setting>
 	
+	<!-- Privacy. -->
+	<setting type="string">
+		<name>privacyMessage</name>
+		<value></value>
+	</setting>
+	
 	<!-- Event table maintenance. -->
 	<setting type="int">
 		<name>lastEventTableMaintenanceTs</name>

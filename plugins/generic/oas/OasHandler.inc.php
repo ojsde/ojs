@@ -53,11 +53,12 @@ class OasHandler extends Handler {
 
 		// Display the privacy info page.
 		$this->setupTemplate($request);
+		$plugin = $this->_getPlugin();
 		$templateMgr = TemplateManager::getManager($request);
 		$templateMgr->assign('pageTitle', 'plugins.generic.oas.optout.title');
 		$templateMgr->assign('oasDisplayPrivacyInfo', true);
 		$templateMgr->assign('hasOptedOut', ($request->getCookieVar('oas-opt-out') ? true : false));
-		$plugin = $this->_getPlugin();
+		$templateMgr->assign('privacyMessage', $plugin->getSetting(0, 'privacyMessage'));
 		$templateMgr->display($plugin->getTemplatePath().'privacyInformation.tpl');
 	}
 

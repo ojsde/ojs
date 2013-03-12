@@ -20,6 +20,17 @@
 	<form class="pkp_form" id="oasSettingsForm" method="post" action="{plugin_url path="settings"}">
 		{include file="common/formErrors.tpl"}
 
+		<h3>{translate key="plugins.generic.oas.settings.privacySettings"}</h3>
+
+		<div id="description"><p>{translate key="plugins.generic.oas.settings.privacyDescription"}</p></div>
+		<div class="separator"></div>
+		<br />
+
+		{fieldLabel name="privacyMessage" key="plugins.generic.oas.settings.privacyMessage"}
+		<textarea name="privacyMessage" id="privacyMessage" class="textField">{$privacyMessage|escape}</textarea>
+
+		<br/>
+		
 		<h3>{translate key="plugins.generic.oas.settings.oaiSettings"}</h3>
 
 		<div id="description"><p>{translate key="plugins.generic.oas.settings.oaiDescription"}</p></div>
