@@ -44,5 +44,11 @@
 		<name>lastSaltDownloadTs</name>
 		<value>0</value>
 	</setting>
+	
+	<!-- OAI authentication -->
+	<setting type="string">
+		<name>oaiPassword</name>
+		<value></value>
+	</setting>
 </plugin_settings>
 

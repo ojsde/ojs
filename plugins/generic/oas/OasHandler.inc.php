@@ -14,6 +14,8 @@
 
 import('classes.handler.Handler');
 
+define('OAS_OAI_USERNAME', 'ojs-oas'); // We use a fixed username to reduce configuration requirements.
+
 class OasHandler extends Handler {
 
 	/**
@@ -66,6 +68,28 @@ class OasHandler extends Handler {
 	 * @param $request Request
 	 */
 	function oai($args, $request) {
+		// Only enable the interface after a password has been set.
+		$plugin = $this->_getPlugin();
+		$oaiPassword = $plugin->getSetting(0, 'oaiPassword');
+		if (empty($oaiPassword)) {
+			$authorized = false;
+			echo 'Please configure an OAI password before trying to ' .
+				'access the OJS OA-S OAI interface.';
+			exit;
+		}
+
+		// Authorization.
+		$oaiUsername = OAS_OAI_USERNAME;
+		if (!isset($_SERVER['PHP_AUTH_USER']) ||
+				$_SERVER['PHP_AUTH_USER'] !== $oaiUsername ||
+				$_SERVER['PHP_AUTH_PW'] !== $oaiPassword) {
+			header('WWW-Authenticate: Basic realm="OJS OA-S OAI"');
+			header('HTTP/1.0 401 Unauthorized');
+			echo 'Access denied.';
+			exit;
+		}
+
+		// Authorized OAI access.
 		$plugin = $this->_getPlugin();
 		$plugin->import('classes/oai/OasOAI');
 		$oai = new OasOAI($request);

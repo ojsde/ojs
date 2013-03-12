@@ -35,6 +35,9 @@ class OasSettingsForm extends Form {
 		// The username is used in HTTP basic authentication and according to RFC2617 it therefore may not contain a colon.
 		$this->addCheck(new FormValidatorRegExp($this, 'saltApiUsername', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.saltApiUsernameRequired', '/^[^:]+$/'));
 		$this->addCheck(new FormValidator($this, 'saltApiPassword', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.saltApiPasswordRequired'));
+
+		// OAI password.
+		$this->addCheck(new FormValidator($this, 'oaiPassword', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.oaiPasswordRequired'));
 	}
 
 
@@ -49,8 +52,9 @@ class OasSettingsForm extends Form {
 		foreach ($this->_getFormFields() as $fieldName) {
 			$this->setData($fieldName, $plugin->getSetting(0, $fieldName));
 		}
-		// We do not echo back the real password.
+		// We do not echo back real passwords.
 		$this->setData('saltApiPassword', OAS_PLUGIN_PASSWORD_PLACEHOLDER);
+		$this->setData('oaiPassword', OAS_PLUGIN_PASSWORD_PLACEHOLDER);
 	}
 
 	/**
@@ -60,15 +64,20 @@ class OasSettingsForm extends Form {
 		// Read regular form data.
 		$this->readUserVars($this->_getFormFields());
 		$request = PKPApplication::getRequest();
+		$plugin =& $this->_plugin;
 
-		// Set the password to the one saved in the DB
-		// if we only got the placehlder from the form.
+		// Set the passwords to the ones saved in the DB
+		// if we only got a placeholder from the form.
 		$saltApiPassword = $request->getUserVar('saltApiPassword');
 		if ($saltApiPassword === OAS_PLUGIN_PASSWORD_PLACEHOLDER) {
-			$plugin =& $this->_plugin;
 			$saltApiPassword = $plugin->getSetting(0, 'saltApiPassword');
 		}
 		$this->setData('saltApiPassword', $saltApiPassword);
+		$oaiPassword = $request->getUserVar('oaiPassword');
+		if ($oaiPassword === OAS_PLUGIN_PASSWORD_PLACEHOLDER) {
+			$oaiPassword = $plugin->getSetting(0, 'oaiPassword');
+		}
+		$this->setData('oaiPassword', $oaiPassword);
 	}
 
 	/**
@@ -78,6 +87,7 @@ class OasSettingsForm extends Form {
 		$plugin =& $this->_plugin;
 		$formFields = $this->_getFormFields();
 		$formFields[] = 'saltApiPassword';
+		$formFields[] = 'oaiPassword';
 		foreach($formFields as $formField) {
 			$plugin->updateSetting(0, $formField, $this->getData($formField), 'string');
 		}

@@ -32,17 +32,27 @@
 	</message>
 
 	<message key="plugins.generic.oas.settings">Settings</message>
-	<message key="plugins.generic.oas.settings.description"><![CDATA[
+	<message key="plugins.generic.oas.settings.oaiDescription">
+		Your usage statistics will be transferred to OA-S via a so-called "OAI-PMH" interface. You have to protect that interface
+		from unauthorized access by setting a self-chosen password. This is necessary to guarantee your users' privacy. When registering
+		to participate in the OA-S system you'll have to provide this password so that the OA-S server can retrieve your statistics data.
+		The corresponding username 'ojs-oas' is fixed in OJS. Please use the username 'ojs-oas' together with your password to register for OA-S.
+	</message>
+	<message key="plugins.generic.oas.settings.oaiPassword">OAI-PMH Password</message>
+	<message key="plugins.generic.oas.settings.oaiPasswordInstructions">Please provide a password to prevent unauthorized access to your raw statistics data.</message>
+	<message key="plugins.generic.oas.settings.oaiPasswordRequired">Please enter a password that protects your statistics data from unauthorized access.</message>
+	<message key="plugins.generic.oas.settings.oaiSettings">Statistics interface settings</message>
+	<message key="plugins.generic.oas.settings.oasSettings">OA-S Plugin: Settings</message>
+	<message key="plugins.generic.oas.settings.saltApiDescription"><![CDATA[
 		The OA-S plugin requires access to a SALT server to pseudonimize IP addresses. After registering your OJS installation with the OA-S project you'll
 		receive a username and password from University Library Saarbrücken (SULB). Please enter these login credentials here so that you are able to use the
 		plug-in.
 	]]></message>
-	<message key="plugins.generic.oas.settings.oasSettings">OA-S Plugin: Settings</message>
 	<message key="plugins.generic.oas.settings.saltApiPassword">Password</message>
 	<message key="plugins.generic.oas.settings.saltApiPasswordInstructions">Please enter the corresponding SALT server password.</message>
 	<message key="plugins.generic.oas.settings.saltApiPasswordRequired">Please enter a valid password to authenticate to the SALT server.</message>
-	<message key="plugins.generic.oas.settings.saltServerSettings">SALT server settings</message>
 	<message key="plugins.generic.oas.settings.saltApiUsername">Username</message>
 	<message key="plugins.generic.oas.settings.saltApiUsernameInstructions">Please enter the OA-S SALT server username you received from University Saarbrücken.</message>
 	<message key="plugins.generic.oas.settings.saltApiUsernameRequired">Please enter a valid username to authenticate to the SALT server (colons are disallowed).</message>
+	<message key="plugins.generic.oas.settings.saltApiSettings">SALT server settings</message>
 </locale>

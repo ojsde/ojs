@@ -20,9 +20,27 @@
 	<form class="pkp_form" id="oasSettingsForm" method="post" action="{plugin_url path="settings"}">
 		{include file="common/formErrors.tpl"}
 
-		<h3>{translate key="plugins.generic.oas.settings.saltServerSettings"}</h3>
+		<h3>{translate key="plugins.generic.oas.settings.oaiSettings"}</h3>
 
-		<div id="description"><p>{translate key="plugins.generic.oas.settings.description"}</p></div>
+		<div id="description"><p>{translate key="plugins.generic.oas.settings.oaiDescription"}</p></div>
+		<div class="separator"></div>
+		<br />
+
+		<table width="100%" class="data">
+			<tr valign="top">
+				<td class="label">{fieldLabel name="oaiPassword" required="true" key="plugins.generic.oas.settings.oaiPassword"}</td>
+				<td class="value"><input type="password" name="oaiPassword" id="oaiPassword" value="{$oaiPassword|escape}" size="15" maxlength="25" class="textField" />
+					<br />
+					<span class="instruct">{translate key="plugins.generic.oas.settings.oaiPasswordInstructions"}</span>
+				</td>
+			</tr>
+		</table>
+
+		<br/>
+		
+		<h3>{translate key="plugins.generic.oas.settings.saltApiSettings"}</h3>
+
+		<div id="description"><p>{translate key="plugins.generic.oas.settings.saltApiDescription"}</p></div>
 		<div class="separator"></div>
 		<br />
 
