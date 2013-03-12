@@ -110,6 +110,7 @@ class Application extends PKPApplication {
 			'JournalSettingsDAO' => 'classes.journal.JournalSettingsDAO',
 			'JournalStatisticsDAO' => 'classes.journal.JournalStatisticsDAO',
 			'LayoutEditorSubmissionDAO' => 'classes.submission.layoutEditor.LayoutEditorSubmissionDAO',
+			'MetricsDAO' => 'classes.statistics.MetricsDAO',
 			'NoteDAO' => 'classes.note.NoteDAO',
 			'OAIDAO' => 'classes.oai.ojs.OAIDAO',
 			'OJSCompletedPaymentDAO' => 'classes.payment.ojs.OJSCompletedPaymentDAO',
