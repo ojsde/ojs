@@ -55,6 +55,7 @@
     <field name="requ_hostname" type="C2" size="255" />
     <field name="requ_classification" type="C2" size="14" />
     <field name="requ_user_agent" type="X" />
+    <field name="srvtype_schsvc" type="X" />
     <descr>OA-S context object table - temporary staging of OA-S usage events</descr>
   </table>
 </schema>

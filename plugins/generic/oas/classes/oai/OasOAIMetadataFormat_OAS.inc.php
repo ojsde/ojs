@@ -59,7 +59,7 @@ class OasOAIMetadataFormat_OAS extends OAIMetadataFormat {
 			'referring-entity' => (empty($referrer) ? false : $referrer),
 			'service_id' => $record->getData('admin_service'),
 			'document_ids' => array_values($record->getData('ref_ids')),
-			'service_types' => array() // Omitted - only relevant for link resolvers.
+			'service_types' => array_values($record->getData('srvtype_schsvc'))
 		);
 		$this->ctxbuild->reset();
 		$this->ctxbuild->add_ctxo($ctx);

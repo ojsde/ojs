@@ -96,6 +96,7 @@ class OasEventStagingDAO extends PKPOAIDAO {
 		$record->identifier = $this->oai->eventIdToIdentifier($row['event_id']);
 		$record->sets = array();
 		$row['ref_ids'] = $this->convertFromDB($row['ref_ids'], 'object');
+		$row['srvtype_schsvc'] = $this->convertFromDB($row['srvtype_schsvc'], 'object');
 		$record->data = $row;
 		return $record;
 	}
@@ -128,6 +129,18 @@ class OasEventStagingDAO extends PKPOAIDAO {
 		$validClassifiers = array(OAS_PLUGIN_CLASSIFICATION_ADMIN);
 		$identifiers = is_array($usageEvent['identifiers']) ? $usageEvent['identifiers'] : array();
 
+		// Set the service type (if any). See: http://www.openurl.info/registry/docs/xsd/info:ofi/fmt:xml:xsd:sch_svc
+		$serviceTypes = array();
+		switch($usageEvent['assocType']) {
+			case ASSOC_TYPE_ARTICLE:
+				$serviceTypes[] = 'abstract';
+				break;
+
+			case ASSOC_TYPE_GALLEY:
+				$serviceTypes[] = 'fulltext';
+				break;
+		}
+
 		// Has the IP. We do this here so that it will be impossible to
 		// store non-hashed IPs which would be a privacy legislation
 		// violation under German law without explicit user consent.
@@ -142,9 +155,9 @@ class OasEventStagingDAO extends PKPOAIDAO {
 				'INSERT INTO oas_event_staging
 					(timestamp, admin_size, admin_document_size, admin_format, admin_service,
 					  ref_ids, ref_ent_id, requ_document_url, requ_hashed_ip, requ_hashed_c,
-					  requ_hostname, requ_classification, requ_user_agent)
+					  requ_hostname, requ_classification, requ_user_agent, srvtype_schsvc)
 				 VALUES
-					(%s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', $this->datetimeToDB($usageEvent['time'])
+					(%s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', $this->datetimeToDB($usageEvent['time'])
 			),
 			array(
 				(int) ($usageEvent['downloadSuccess'] ? $usageEvent['docSize'] : 0),
@@ -158,7 +171,8 @@ class OasEventStagingDAO extends PKPOAIDAO {
 				$hashedC,
 				$usageEvent['host'],
 				(in_array($usageEvent['classification'], $validClassifiers) ? $usageEvent['classification'] : null),
-				$usageEvent['userAgent']
+				$usageEvent['userAgent'],
+				$this->convertToDB($serviceTypes, $type = 'object')
 			)
 		);
 		return $this->_getInsertId('oas_event_staging', 'event_id');
