@@ -59,6 +59,19 @@ class OasHandler extends Handler {
 		$templateMgr->display($plugin->getTemplatePath().'privacyInformation.tpl');
 	}
 
+	/**
+	 * The OAI endpoint for OA-S event log data export.
+	 *
+	 * @param $args array
+	 * @param $request Request
+	 */
+	function oai($args, $request) {
+		$plugin = $this->_getPlugin();
+		$plugin->import('classes/oai/OasOAI');
+		$oai = new OasOAI($request);
+		$oai->execute();
+	}
+
 
 	//
 	// Private helper methods

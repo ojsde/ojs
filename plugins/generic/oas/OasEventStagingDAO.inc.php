@@ -12,35 +12,127 @@
  *
  * @brief Class for temporary staging of OA-S context objects before they
  *  are transferred to the OA-S service provider.
+ *
+ *  We extend the OAI DAO base class so that we have core OAI features
+ *  available which we need for event log transmission via OAI-PMH.
  */
 
-class OasEventStagingDAO extends DAO {
+import('lib.pkp.classes.oai.PKPOAIDAO');
+
+class OasEventStagingDAO extends PKPOAIDAO {
 
 	/**
-	 * Log a new usage event to the staging table.
-	 *
-	 * @param $usageEvent array
-	 * @param $salt string A SALT value for IP hashing.
-	 *
-	 * @return integer|null The ID of the new database entry or null if something
-	 *  went wrong (e.g. when a valid SALT was not provided).
+	 * Constructor
 	 */
+	function OasEventStagingDAO() {
+		parent::PKPOAIDAO();
+	}
+
+
+	//
+	// Implement template methods from PKPOAIDAO.
+	//
+	/**
+	 * @see PKPOAIDAO::getRecordSelectStatement()
+	 *
+	 * Comments:
+	 * - Records must contain a 'last_modified' column which represents the
+	 *   timestamp of the record.
+	 */
+	function getRecordSelectStatement() {
+		return 'SELECT es.timestamp as last_modified, es.*';
+	}
+
+	/**
+	 * @see PKPOAIDAO::getRecordJoinClause()
+	 *
+	 * Comments:
+	 * - All data comes from a single table.
+	 */
+	function getRecordJoinClause($eventId = null, $setIds = array(), $set = null) {
+		return 'INNER JOIN oas_event_staging es ON (m.i = 0' . (isset($eventId) ? ' AND es.event_id = ?' : '') . ')';
+	}
+
+	/**
+	 * @see PKPOAIDAO::getAccessibleRecordWhereClause()
+	 *
+	 * Comments:
+	 * - We do not filter event logs at all when returning them. Event log
+	 *   maintenance is done by deleting old records automatically.
+	 * - We have to filter on the "mutex" table (alias: "m") that's used to
+	 *   simulate UNION ALL statements to avoid a Cartesian join.
+	 */
+	function getAccessibleRecordWhereClause() {
+		return '';
+	}
+
+	/**
+	 * @see PKPOAIDAO::getDateRangeWhereClause()
+	 *
+	 * Comments:
+	 * - $from and $until are matched directly against the event timestamp in
+	 *   the database.
+	 * - $from and $until are not necessarily set. When not set the earliest
+	 *   (latest) possible point in time will be assumed, i.e. the event
+	 *   list will not be limited in the beginning (end).
+	 * - We order by event ID as this is a unique order and fast (indexed). We
+	 *   need an order so that $offset and $limit designate a stable and
+	 *   unique partition of the data.
+	 */
+	function getDateRangeWhereClause($from, $until) {
+		return (isset($from) ? ' AND es.timestamp >= '. $this->datetimeToDB($from) : '')
+			. (isset($until) ? ' AND es.timestamp <= ' . $this->datetimeToDB($until) : '')
+			. ' ORDER BY es.event_id';
+	}
+
+	/**
+	 * @see PKPOAIDAO::setOAIData()
+	 *
+	 * Comments:
+	 * - The returned record identifier consists of the identifier prefix +
+	 *   the auto-incremented event record ID from the database.
+	 */
+	function &setOAIData(&$record, $row, $isRecord = true) {
+		$record->identifier = $this->oai->eventIdToIdentifier($row['event_id']);
+		$record->sets = array();
+		$row['ref_ids'] = $this->convertFromDB($row['ref_ids'], 'object');
+		$record->data = $row;
+		return $record;
+	}
+
+	/**
+	 * @see PKPOAIDAO::getEarliestDatestamp()
+	 */
+	function getEarliestDatestamp($setIds = array()) {
+		return parent::getEarliestDatestamp('SELECT	MIN(es.timestamp)', $setIds);
+	}
+
+
+	//
+	// Public methods.
+	//
+	/**
+	* Log a new usage event to the staging table.
+	*
+	* @param $usageEvent array
+	* @param $salt string A SALT value for IP hashing.
+	*
+	* @return integer|null The ID of the new database entry or null if something
+	*  went wrong (e.g. when a valid SALT was not provided).
+	*/
 	function stageUsageEvent($usageEvent, $salt) {
 		// If the salt is empty then we're not allowed to save anything.
 		if (empty($salt)) return null;
 
 		// We currently only use 'administration' classification. TODO: Add more if we actually use them.
-		$validClassifiers = array(
-			OAS_PLUGIN_CLASSIFICATION_ADMIN
-		);
+		$validClassifiers = array(OAS_PLUGIN_CLASSIFICATION_ADMIN);
 		$identifiers = is_array($usageEvent['identifiers']) ? $usageEvent['identifiers'] : array();
-		$identifiers['other::url'] = $usageEvent['canonicalUrl'];
 
 		// Has the IP. We do this here so that it will be impossible to
 		// store non-hashed IPs which would be a privacy legislation
 		// violation under German law without explicit user consent.
-		$hashedIp = $this->hashIp($usageEvent['ip'], $salt);
-		$hashedC = $this->hashIp($this->getCClassNet($usageEvent['ip']), $salt);
+		$hashedIp = $this->_hashIp($usageEvent['ip'], $salt);
+		$hashedC = $this->_hashIp($this->_getCClassNet($usageEvent['ip']), $salt);
 
 		// Never store unhashed IPs!
 		if ($hashedIp === false || $hashedC === false) return false;
@@ -49,10 +141,10 @@ class OasEventStagingDAO extends DAO {
 			sprintf(
 				'INSERT INTO oas_event_staging
 					(timestamp, admin_size, admin_document_size, admin_format, admin_service,
-					  ref_ids, ref_ent_ids, requ_hashed_ip, requ_hashed_c, requ_hostname,
-					  requ_classification, requ_user_agent)
-				VALUES
-					(%s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', $this->datetimeToDB($usageEvent['time'])
+					  ref_ids, ref_ent_id, requ_document_url, requ_hashed_ip, requ_hashed_c,
+					  requ_hostname, requ_classification, requ_user_agent)
+				 VALUES
+					(%s, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', $this->datetimeToDB($usageEvent['time'])
 			),
 			array(
 				(int) ($usageEvent['downloadSuccess'] ? $usageEvent['docSize'] : 0),
@@ -61,6 +153,7 @@ class OasEventStagingDAO extends DAO {
 				$usageEvent['serviceUri'],
 				$this->convertToDB($identifiers, $type = 'object'),
 				$usageEvent['referrer'],
+				$usageEvent['canonicalUrl'],
 				$hashedIp,
 				$hashedC,
 				$usageEvent['host'],
@@ -72,12 +165,12 @@ class OasEventStagingDAO extends DAO {
 	}
 
 	/**
-	 * Update the download success flag of a usage
-	 * event.
-	 *
-	 * @param $usageEventId integer
-	 * @param $downloadSuccess boolean
-	 */
+	* Update the download success flag of a usage
+	* event.
+	*
+	* @param $usageEventId integer
+	* @param $downloadSuccess boolean
+	*/
 	function setDownloadSuccess($usageEventId, $downloadSuccess) {
 		// We simulate download success by setting the downloaded size to
 		// the document size. This signals to OA-S that the event
@@ -86,8 +179,8 @@ class OasEventStagingDAO extends DAO {
 		// size = 0) which signals to OA-S that the event should be
 		// considered an aborted download.
 		if ($downloadSuccess) {
-			$this->update(
-				'UPDATE oas_event_staging SET admin_size = admin_document_size
+		$this->update(
+			'UPDATE oas_event_staging SET admin_size = admin_document_size
 				WHERE event_id = ?', (int)$usageEventId);
 		}
 	}
@@ -106,6 +199,10 @@ class OasEventStagingDAO extends DAO {
 		);
 	}
 
+
+	//
+	// Private helper methods.
+	//
 	/**
 	 * Hash (SHA256) the given IP using the given SALT.
 	 *
@@ -117,7 +214,7 @@ class OasEventStagingDAO extends DAO {
 	 * @param $salt string
 	 * @return string|boolean The hashed IP or boolean false if something went wrong.
 	 */
-	function hashIp($ip, $salt) {
+	function _hashIp($ip, $salt) {
 		if(function_exists('mhash')) {
 			return bin2hex(mhash(MHASH_SHA256, $ip.$salt));
 		} else {
@@ -136,7 +233,7 @@ class OasEventStagingDAO extends DAO {
 	* @param $ip The IP to shorten.
 	* @return string C-class formatted as xxx.xxx.xxx.0.
 	*/
-	function getCClassNet($ip) {
+	function _getCClassNet($ip) {
 		return preg_replace('/^([0-9]+\.[0-9]+\.[0-9]+)\.[0-9]+$/','\1.0', $ip);
 	}
 }

@@ -206,8 +206,12 @@ class OasPlugin extends GenericPlugin {
 		if ($page !== 'oas') return;
 
 		// Check the operation.
+		$availableOps = array('privacyInformation', 'oai');
 		$op = $args[1];
-		if ($op != 'privacyInformation') return;
+		if (!in_array($op, $availableOps)) return;
+
+		// Maybe instantiate the event log staging DAO.
+		if ($op == 'oai') $this->_registerDao();
 
 		// Looks as if our handler had been requested.
 		define('HANDLER_CLASS', 'OasHandler');
@@ -438,12 +442,8 @@ class OasPlugin extends GenericPlugin {
 			'classification'
 		);
 
-		// Prefetch the DAO so that it is available even after download finishes.
-		// (OJS will clear the registry before downloading files.)
-		$this->import('OasEventStagingDAO');
-		$this->_oasEventStagingDao = new OasEventStagingDAO();
-		// We don't really have to register the DAO but let's do it for the sake of consistency.
-		DAORegistry::registerDAO('OasContextObjectDAO', $this->_oasEventStagingDao);
+		// Instantiate and register the DAO.
+		$this->_registerDao();
 
 		// Check whether we have outstanding maintenance jobs.
 		$salt = $this->_doMaintenance();
@@ -534,6 +534,18 @@ class OasPlugin extends GenericPlugin {
 		}
 
 		return $salt;
+	}
+
+	/**
+	 * Instantiate and register the event staging DAO.
+	 */
+	function _registerDao() {
+		// Prefetch the DAO so that it is available even after download finishes.
+		// (OJS will clear the registry before downloading files.)
+		$this->import('OasEventStagingDAO');
+		$this->_oasEventStagingDao = new OasEventStagingDAO();
+		// Register the DAO.
+		DAORegistry::registerDAO('OasEventStagingDAO', $this->_oasEventStagingDao);
 	}
 
 	/**
