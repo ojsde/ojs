@@ -64,11 +64,11 @@ class OasOAI extends OAI {
 		// The OA-S OAI interface must support Dublin Core format
 		// as well as the OA-S custom ContextObject format.
 		if ($namesOnly) {
-			return array('oai_dc', 'ctxo');
+			return array('oai_dc', 'oas');
 		} else {
 			return array(
 				'oai_dc' => new OasOAIMetadataFormat_DC(),
-				'ctxo' => new OasOAIMetadataFormat_OAS()
+				'oas' => new OasOAIMetadataFormat_OAS()
 			);
 		}
 	}

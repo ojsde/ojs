@@ -27,7 +27,7 @@ class OasOAIMetadataFormat_OAS extends OAIMetadataFormat {
 	 */
 	function OasOAIMetadataFormat_OAS() {
 		parent::OAIMetadataFormat(
-			'ctxo', 'http://www.openurl.info/registry/docs/xsd/info:ofi/fmt:xml:xsd:ctx',
+			'oas', 'http://www.openurl.info/registry/docs/xsd/info:ofi/fmt:xml:xsd:ctx',
 			'info:ofi/fmt:xml:xsd:ctx'
 		);
 		$this->ctxbuild = new CtxBuilder();
