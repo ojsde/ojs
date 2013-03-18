@@ -20,7 +20,11 @@ import('lib.pkp.classes.task.FileLoader');
 
 class OasFileLoader extends FileLoader {
 
+	/** @var string */
 	private $_siteId;
+
+	/** @var PluginSettingsDAO */
+	private $_pluginSettingsDao;
 
 	/**
 	 * Constructor
@@ -32,13 +36,30 @@ class OasFileLoader extends FileLoader {
 		parent::FileLoader($args);
 
 		// Get the installation ID.
-		$pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
-		$this->_siteId = $pluginSettingsDao->getSetting(0, 'OasPlugin', 'uniqueSiteId');
+		$this->_pluginSettingsDao = DAORegistry::getDAO('PluginSettingsDAO');
+		$this->_siteId = $this->_getSetting('uniqueSiteId');
 	}
+
 
 	//
 	// Implement template methods from FileLoader
 	//
+	/**
+	 * @see FileLoader::execute()
+	 */
+	public function execute() {
+		// Make sure that the folder structure to handle file downloads is
+		// in place.
+		if (!$this->checkFolderStructure(true)) return false;
+
+		// Download new files from the OA-S server.
+		if (!$this->_stageStatisticsFiles()) return false;
+
+		// Load the files into the database.
+		return parent::execute();
+	}
+
+
 	/**
 	 * @see FileLoader::processFile()
 	 */
@@ -134,6 +155,87 @@ class OasFileLoader extends FileLoader {
 
 		fclose($handle);
 		return true;
+	}
+
+
+	//
+	// Private helper methods.
+	//
+	/**
+	 * Poll the OA-S server for new statistics files and
+	 * download them to the staging folder.
+	 * @return boolean
+	 */
+	function _stageStatisticsFiles() {
+		$oasServerUrl = trim($this->_getSetting('oasServerUrl'), '/');
+		$oasServerUsername = $this->_getSetting('oasServerUsername');
+		$oasServerPassword = $this->_getSetting('oasServerPassword');
+		if (empty($oasServerUrl) || empty($oasServerUsername) || empty($oasServerPassword)) return false;
+
+		// Get the last successfully downloaded file.
+		$oasServerLastDownloadedFile = $this->_getSetting('oasServerLastDownloadedFile');
+		if (empty($oasServerLastDownloadedFile)) {
+			// When this is the first load date then start with a date
+			// one week ago.
+			$lastDate = date('Y-m-d', strtotime('-7 days'));
+		} else {
+			// Extract the date from the file name.
+			$lastDate = substr($oasServerLastDownloadedFile, 0, 10);
+		}
+		if (!String::regexp_match('/[0-9]{4}(-[0-9]{2}){2}/', $lastDate)) return false;
+		$lastDateTs = strtotime($lastDate);
+
+		// Try loading files up until today.
+		$todayTs = strtotime(date('Y-m-d'));
+
+		// Download files into the staging folder.
+		$stagePath = $this->getStagePath();
+		import('lib.pkp.classes.webservice.WebService');
+		$ws = new WebService();
+		$ws->setAuthUsername($oasServerUsername);
+		$ws->setAuthPassword($oasServerPassword);
+		import('lib.pkp.classes.webservice.WebServiceRequest');
+		$currentDateTs = $lastDateTs;
+		while ($currentDateTs < $todayTs) {
+			$currentDateTs += 60 * 60 * 24;
+			$year = date('Y', $currentDateTs);
+			$month = date('m', $currentDateTs);
+			$day = date('Y-m-d', $currentDateTs);
+			$filename = "${day}_$day.csv";
+			$url =  "$oasServerUrl/$year/$month/$filename";
+			$wsReq = new WebServiceRequest($url);
+			$wsReq->setAccept('text/plain');
+			$csv = $ws->call($wsReq);
+			if ($ws->getLastResponseStatus() == 200) {
+				$targetPath = "$stagePath/$filename";
+				if (file_put_contents($targetPath, $csv) === false) return false;
+				$this->_updateSetting('oasServerLastDownloadedFile', $filename, 'string');
+			} elseif ($ws->getLastResponseStatus() != 404) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Get an OasPlugin setting.
+	 * @param $settingName string
+	 * @return mixed
+	 */
+	private function _getSetting($settingName) {
+		if (!is_a($this->_pluginSettingsDao, 'PluginSettingsDAO')) return null;
+		return $this->_pluginSettingsDao->getSetting(0, 'OasPlugin', $settingName);
+	}
+
+	/**
+	 * Update an OasPlugin setting.
+	 * @param $settingName string
+	 * @param $settingValue mixed
+	 * @param $settingType string
+	 */
+	private function _updateSetting($settingName, $settingValue, $settingType) {
+		if (!is_a($this->_pluginSettingsDao, 'PluginSettingsDAO')) return null;
+		return $this->_pluginSettingsDao->updateSetting(0, 'OasPlugin', $settingName, $settingValue, $settingType);
 	}
 }
 

@@ -31,13 +31,19 @@ class OasSettingsForm extends Form {
 		$this->_plugin =& $plugin;
 		parent::Form($plugin->getTemplatePath() . 'settingsForm.tpl');
 
-		// SALT server configuration.
-		// The username is used in HTTP basic authentication and according to RFC2617 it therefore may not contain a colon.
-		$this->addCheck(new FormValidatorRegExp($this, 'saltApiUsername', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.saltApiUsernameRequired', '/^[^:]+$/'));
-		$this->addCheck(new FormValidator($this, 'saltApiPassword', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.saltApiPasswordRequired'));
-
 		// OAI password.
 		$this->addCheck(new FormValidator($this, 'oaiPassword', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.oaiPasswordRequired'));
+
+		// OA-S statistics server configuration.
+		$this->addCheck(new FormValidatorUrl($this, 'oasServerUrl', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.oasServerUrlRequired'));
+		// The username is used in HTTP basic authentication and according to RFC2617 it therefore may not contain a colon.
+		$this->addCheck(new FormValidatorRegExp($this, 'oasServerUsername', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.oasServerUsernameRequired', '/^[^:]+$/'));
+		$this->addCheck(new FormValidator($this, 'oasServerPassword', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.oasServerPasswordRequired'));
+		
+		// SALT server configuration.
+		// The username is used in HTTP basic authentication.
+		$this->addCheck(new FormValidatorRegExp($this, 'saltApiUsername', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.saltApiUsernameRequired', '/^[^:]+$/'));
+		$this->addCheck(new FormValidator($this, 'saltApiPassword', FORM_VALIDATOR_REQUIRED_VALUE, 'plugins.generic.oas.settings.saltApiPasswordRequired'));
 	}
 
 
@@ -52,9 +58,10 @@ class OasSettingsForm extends Form {
 		foreach ($this->_getFormFields() as $fieldName) {
 			$this->setData($fieldName, $plugin->getSetting(0, $fieldName));
 		}
-		// We do not echo back real passwords.
-		$this->setData('saltApiPassword', OAS_PLUGIN_PASSWORD_PLACEHOLDER);
-		$this->setData('oaiPassword', OAS_PLUGIN_PASSWORD_PLACEHOLDER);
+		// We do not echo back passwords.
+		foreach ($this->_getPasswordFields() as $fieldName) {
+			$this->setData($fieldName, OAS_PLUGIN_PASSWORD_PLACEHOLDER);
+		}
 	}
 
 	/**
@@ -68,16 +75,13 @@ class OasSettingsForm extends Form {
 
 		// Set the passwords to the ones saved in the DB
 		// if we only got a placeholder from the form.
-		$saltApiPassword = $request->getUserVar('saltApiPassword');
-		if ($saltApiPassword === OAS_PLUGIN_PASSWORD_PLACEHOLDER) {
-			$saltApiPassword = $plugin->getSetting(0, 'saltApiPassword');
+		foreach($this->_getPasswordFields() as $fieldName) {
+			$password = $request->getUserVar($fieldName);
+			if ($password === OAS_PLUGIN_PASSWORD_PLACEHOLDER) {
+				$password = $plugin->getSetting(0, $fieldName);
+			}
+			$this->setData($fieldName, $password);
 		}
-		$this->setData('saltApiPassword', $saltApiPassword);
-		$oaiPassword = $request->getUserVar('oaiPassword');
-		if ($oaiPassword === OAS_PLUGIN_PASSWORD_PLACEHOLDER) {
-			$oaiPassword = $plugin->getSetting(0, 'oaiPassword');
-		}
-		$this->setData('oaiPassword', $oaiPassword);
 	}
 
 	/**
@@ -85,9 +89,7 @@ class OasSettingsForm extends Form {
 	 */
 	function execute() {
 		$plugin =& $this->_plugin;
-		$formFields = $this->_getFormFields();
-		$formFields[] = 'saltApiPassword';
-		$formFields[] = 'oaiPassword';
+		$formFields = array_merge($this->_getFormFields(), $this->_getPasswordFields());
 		foreach($formFields as $formField) {
 			$plugin->updateSetting(0, $formField, $this->getData($formField), 'string');
 		}
@@ -98,12 +100,22 @@ class OasSettingsForm extends Form {
 	// Private helper methods
 	//
 	/**
-	 * Return the field names of this form.
+	 * Return the field names of this form except password fields.
 	 * @return array
 	 */
 	function _getFormFields() {
 		return array(
-			'saltApiUsername', 'privacyMessage'
+			'privacyMessage', 'saltApiUsername', 'oasServerUrl', 'oasServerUsername'
+		);
+	}
+	
+	/**
+	 * Return the field names of password fields.
+	 * @return array
+	 */
+	function _getPasswordFields() {
+		return array(
+			'saltApiPassword', 'oaiPassword', 'oasServerPassword'
 		);
 	}
 }

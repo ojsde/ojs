@@ -23,12 +23,6 @@
 		<value></value>
 	</setting>
 	
-	<!-- Event table maintenance. -->
-	<setting type="int">
-		<name>lastEventTableMaintenanceTs</name>
-		<value>0</value>
-	</setting>
-	
 	<!-- SALT management. -->
 	<setting type="string">
 		<name>salt</name>
@@ -51,15 +45,39 @@
 		<value>0</value>
 	</setting>
 	
-	<!-- OAI authentication -->
+	<!-- Event ID generation -->
+	<setting type="string">
+		<name>uniqueSiteId</name>
+		<value></value>
+	</setting>
+	
+	<!-- Event table maintenance. -->
+	<setting type="int">
+		<name>lastEventTableMaintenanceTs</name>
+		<value>0</value>
+	</setting>
+	
+	<!-- OAI authentication. -->
 	<setting type="string">
 		<name>oaiPassword</name>
 		<value></value>
 	</setting>
 	
-	<!-- Event ID generation -->
+	<!-- OA-S statistics server access. -->
 	<setting type="string">
-		<name>uniqueSiteId</name>
+		<name>oasServerUrl</name>
+		<value></value>
+	</setting>
+	<setting type="string">
+		<name>oasServerUsername</name>
+		<value></value>
+	</setting>
+	<setting type="string">
+		<name>oasServerPassword</name>
+		<value></value>
+	</setting>
+	<setting type="string">
+		<name>oasServerLastDownloadedFile</name>
 		<value></value>
 	</setting>
 </plugin_settings>

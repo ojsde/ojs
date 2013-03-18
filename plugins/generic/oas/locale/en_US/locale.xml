@@ -33,6 +33,9 @@
 		cookie contains no information that may be used to identify you. Please note that if you are using a different browser or if you delete cookies from your
 		browser then you'll have to opt-out again as we'll not keep any personal information about you on our side to protect your privacy.
 	</message>
+	
+	<message key="plugins.generic.oas.updateStatisticsError">Error while updating statistics</message>
+	<message key="plugins.generic.oas.updateStatisticsSuccess">Successfully updated statistics</message>
 
 	<message key="plugins.generic.oas.settings">Settings</message>
 	<message key="plugins.generic.oas.settings.admin">OA-S Plugin Administration</message>
@@ -41,16 +44,31 @@
 		update statistics manually by clicking the button below.
 	</message>
 	<message key="plugins.generic.oas.settings.adminUpdate">Update Statistics</message>
-	<message key="plugins.generic.oas.settings.oaiDescription">
+	<message key="plugins.generic.oas.settings.oaiPassword">OAI-PMH Password</message>
+	<message key="plugins.generic.oas.settings.oaiPasswordInstructions">Please provide a password to prevent unauthorized access to your raw statistics data.</message>
+	<message key="plugins.generic.oas.settings.oaiPasswordRequired">Please enter a password that protects your statistics data from unauthorized access.</message>
+	<message key="plugins.generic.oas.settings.oasDataProviderDescription">
 		Your usage statistics will be transferred to OA-S via a so-called "OAI-PMH" interface. You have to protect that interface
 		from unauthorized access by setting a self-chosen password. This is necessary to guarantee your users' privacy. When registering
 		to participate in the OA-S system you'll have to provide this password so that the OA-S server can retrieve your statistics data.
 		The corresponding username 'ojs-oas' is fixed in OJS. Please use the username 'ojs-oas' together with your password to register for OA-S.
 	</message>
-	<message key="plugins.generic.oas.settings.oaiPassword">OAI-PMH Password</message>
-	<message key="plugins.generic.oas.settings.oaiPasswordInstructions">Please provide a password to prevent unauthorized access to your raw statistics data.</message>
-	<message key="plugins.generic.oas.settings.oaiPasswordRequired">Please enter a password that protects your statistics data from unauthorized access.</message>
-	<message key="plugins.generic.oas.settings.oaiSettings">Statistics interface settings</message>
+	<message key="plugins.generic.oas.settings.oasDataProviderSettings">Data Provider settings (Statistics export)</message>
+	<message key="plugins.generic.oas.settings.oasServerPassword">Password</message>
+	<message key="plugins.generic.oas.settings.oasServerPasswordInstructions">Please enter the OA-S statistics server password.</message>
+	<message key="plugins.generic.oas.settings.oasServerPasswordRequired">Please enter a valid password to authenticate to the OA-S statistics server.</message>
+	<message key="plugins.generic.oas.settings.oasServerUrl">Statistics Server URL</message>
+	<message key="plugins.generic.oas.settings.oasServerUrlInstructions">Please enter the OA-S statistics server URL you received from the OA-S project (example: https://oase.gbv.de/ojs-test/).</message>
+	<message key="plugins.generic.oas.settings.oasServerUrlRequired">Please enter a valid OA-S statistics server URL (example: https://oase.gbv.de/ojs-test/).</message>
+	<message key="plugins.generic.oas.settings.oasServerUsername">Username</message>
+	<message key="plugins.generic.oas.settings.oasServerUsernameInstructions">Please enter the OA-S statistics server username you received from the OA-S project.</message>
+	<message key="plugins.generic.oas.settings.oasServerUsernameRequired">Please enter a valid username to authenticate to the OA-S statistics server (colons are disallowed).</message>
+	<message key="plugins.generic.oas.settings.oasServiceProviderDescription">
+		Consolidated and cleansed usage statistics will be automatically be downloaded from the OA-S statistics server. Once you registered to
+		participate in the OA-S project, you'll receive a username and password to access that statistics server. Please enter these
+		credentials here.
+	</message>
+	<message key="plugins.generic.oas.settings.oasServiceProviderSettings">Service Provider settings (Statistics import)</message>
 	<message key="plugins.generic.oas.settings.oasSettings">OA-S Plugin: Settings</message>
 	<message key="plugins.generic.oas.settings.privacyDescription">
 		Transferring statistics data to OA-S may have direct or indirect implications for your users' privacy. Please check whether

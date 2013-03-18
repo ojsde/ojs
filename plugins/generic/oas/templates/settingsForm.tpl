@@ -31,9 +31,9 @@
 
 		<br/>
 		
-		<h3>{translate key="plugins.generic.oas.settings.oaiSettings"}</h3>
+		<h3>{translate key="plugins.generic.oas.settings.oasDataProviderSettings"}</h3>
 
-		<div id="description"><p>{translate key="plugins.generic.oas.settings.oaiDescription"}</p></div>
+		<div id="description"><p>{translate key="plugins.generic.oas.settings.oasDataProviderDescription"}</p></div>
 		<div class="separator"></div>
 		<br />
 
@@ -43,6 +43,38 @@
 				<td class="value"><input type="password" name="oaiPassword" id="oaiPassword" value="{$oaiPassword|escape}" size="15" maxlength="25" class="textField" />
 					<br />
 					<span class="instruct">{translate key="plugins.generic.oas.settings.oaiPasswordInstructions"}</span>
+				</td>
+			</tr>
+		</table>
+
+		<br/>
+		
+		<h3>{translate key="plugins.generic.oas.settings.oasServiceProviderSettings"}</h3>
+
+		<div id="description"><p>{translate key="plugins.generic.oas.settings.oasServiceProviderDescription"}</p></div>
+		<div class="separator"></div>
+		<br />
+
+		<table width="100%" class="data">
+			<tr valign="top">
+				<td class="label">{fieldLabel name="oasServerUrl" required="true" key="plugins.generic.oas.settings.oasServerUrl"}</td>
+				<td class="value"><input type="text" name="oasServerUrl" id="oasServerUrl" value="{$oasServerUrl|escape}" size="15" maxlength="50" class="textField" />
+					<br />
+					<span class="instruct">{translate key="plugins.generic.oas.settings.oasServerUrlInstructions"}</span>
+				</td>
+			</tr>
+			<tr valign="top">
+				<td class="label">{fieldLabel name="oasServerUsername" required="true" key="plugins.generic.oas.settings.oasServerUsername"}</td>
+				<td class="value"><input type="text" name="oasServerUsername" id="oasServerUsername" value="{$oasServerUsername|escape}" size="15" maxlength="50" class="textField" />
+					<br />
+					<span class="instruct">{translate key="plugins.generic.oas.settings.oasServerUsernameInstructions"}</span>
+				</td>
+			</tr>
+			<tr valign="top">
+				<td class="label">{fieldLabel name="oasServerPassword" required="true" key="plugins.generic.oas.settings.oasServerPassword"}</td>
+				<td class="value"><input type="password" name="oasServerPassword" id="oasServerPassword" value="{$oasServerPassword|escape}" size="15" maxlength="25" class="textField" />
+					<br />
+					<span class="instruct">{translate key="plugins.generic.oas.settings.oasServerPasswordInstructions"}</span>
 				</td>
 			</tr>
 		</table>

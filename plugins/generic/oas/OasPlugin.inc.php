@@ -156,9 +156,12 @@ class OasPlugin extends GenericPlugin {
 
 					// Update statistics data.
 					if ($request->getUserVar('updateStatistics')) {
-						if (!$this->_updateStatistics()) {
-							$templateMgr->assign('updateStatisticsMessage', 'Error while updating statistics');
+						if ($this->_updateStatistics()) {
+							$message = __('plugins.generic.oas.updateStatisticsSuccess');
+						} else {
+							$message = __('plugins.generic.oas.updateStatisticsError');
 						}
+						$templateMgr->assign('updateStatisticsMessage', $message);
 					}
 
 					// Re-display the settings page after executing
@@ -589,36 +592,10 @@ class OasPlugin extends GenericPlugin {
 	 * @return boolean True, if the update was successful, otherwise false.
 	 */
 	function _updateStatistics() {
-		// Instantiate the file loader.
+		// Load files.
 		$this->import('classes.task.OasFileLoader');
 		$fileLoader = new OasFileLoader();
-
-		// Make sure that the folder structure to handle file downloads is
-		// in place.
-		if (!$fileLoader->checkFolderStructure(true)) return false;
-
-		// Download new files from the OA-S server.
-		if (!$this->_pullStatisticsFiles($fileLoader)) return false;
-
-		// Load files.
-		if (!$fileLoader->execute()) return false;
-
-		return true;
-	}
-
-	/**
-	 * Poll the OA-S server for new statistics files and
-	 * download them.
-	 * @param $fileLoader OasFileLoader
-	 * @return boolean
-	 */
-	function _pullStatisticsFiles($fileLoader) {
-		// TODO: implement.
-		// Dummy implementation as long as we don't have real data on the
-		// statistics server: take sample file from archive and move it
-		// to staging.
-		if (is_readable($fileLoader->getStagePath() . '/test.csv')) return true;
-		return rename($fileLoader->getArchivePath() . '/test.csv', $fileLoader->getStagePath() . '/test.csv');
+		return $fileLoader->execute();
 	}
 
 	/**
