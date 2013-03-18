@@ -1,0 +1,179 @@
+Welcome to the Open Access Statistics Plug-In!
+----------------------------------------------
+
+This plug-in provides a simple way to transmit statistics to the Open Access
+Statistics (OA-S) service provider.
+
+Before installing or configuring this plugin please have a look at the [OA-S
+web site](http://www.dini.de/projekte/oa-statistik/). You'll find a good
+overview over the [OA-S architecture]
+(http://www.dini.de/projekte/oa-statistik/die-technik/) there, too.
+
+The basic idea of OA-S can be described as a co-operation of two institutions:
+
+ 1. The data provider (in this case an OJS installation) tracks access to
+    documents: article and issue galleys, article abstracts and supplementary
+    files.
+ 2. Access data will then be made available to the OA-S service provider through
+    a protected OAI interface and harvested by OA-S.
+ 3. The OA-S service provider will clean the raw data and produce aggregate
+    metrics based on the COUNTER standard.
+ 4. The data provider (OJS) retrieves metrics from the service provider (OA-S)
+    on a daily basis and stores them in OJS. 
+
+These metrics can then be used in different ways in OJS, e.g.
+
+ - They can be displayed to the editors, authors and readers on their respective
+   internal and external article pages.
+ - They can be used in search for ranking.
+ - Editors can produce elaborate statistics reports.
+ - Readers can list "most viewed articles" of a journal.
+ - Readers can list "other (more viewed) articles of the same author" of an
+   article.
+ - Readers can list "similar (more viewed) articles" on an article's page.
+ - etc. 
+
+ 
+Registration
+------------
+
+Go to the [OA-S registration page]
+(http://www.dini.de/projekte/oa-statistik/die-technik/registrierung/).
+
+Enter the following data to register for OA-S:
+ 
+ - repository name (Name des Repositories): Choose a repository name that
+   corresponds to your ojs installation (not to a single journal!).
+   
+ - DINI certificate (DINI Zertifikat): Select your DINI certificate level.
+ 
+ - Data Provider URL: You'll have to be very careful to enter the correct data
+   provider URL here, otherwise statistics cannot be retrieved from the OA-S
+   project. The correct data provider URL consists of your installations base
+   URL + the extension '/index.php/index/oas/oai'.
+   
+   The base URL is set in config.inc.php, section [general], parameter
+   'base_url'.
+   
+   Here an example:
+   Assume your base URL was 'http://ojs-test.cedis.fu-berlin.de/ojs-oas'. Then
+   the correct data provider URL would be:
+   
+   http://ojs-test.cedis.fu-berlin.de/ojs-oas/index.php/index/oas/oai
+ 
+ - Identifier Prefix: Please enter 'ojs' (all lowercase!).
+ 
+ - Reporting Frequency (Auswertungshäufigkeit): Please choose 'daily' (täglich).
+ 
+ - Processing Period (Bearbeitungszeitraum): Please choose 'day' (Tag).
+ 
+ - Export Format: Please choose 'CSV'.
+
+ - Enter the remaining contact data.
+ 
+It is important that you register exactly with the above parameters. Otherwise
+your OJS installation will not be able to communicate with the OA-S service
+provider.
+
+
+Installation
+------------
+
+Please see the general instructions provided by the OJS project how to install
+external plugins. Download the plugin from the plugin gallery, extract it into
+your plugin folder and execute the upgrade script:
+
+#> php tools/upgrade.php upgrade
+
+
+Configuration (plugin)
+----------------------
+
+Before you can configure your plugin you'll have to wait for OA-S to provide
+the following information:
+
+ - your OA-S statistics server URL, username and password
+ - the SALT server username and password 
+
+Usually this information will be sent to you by email upon registration. Keep
+it in reach for plugin configuration.
+
+Once you received the above data, log in as a journal manager. Then go to the
+journal manager's "System Plugins" management page. If you correctly installed 
+the OA-S plugin the you'll find it in the "generic plugins" category.
+
+Activate the plugin and go to its settings page.
+
+Enter a privacy message and create a password to protect your OA-S statistics
+interface from unauthorized access. Without setting a password, your interface
+will not work.
+
+Once you created an OA-S OAI password you'll have to send it by email to the
+OA-S project (oas@gbv.de). Please make sure you include the repository name or
+other identifying information in that email, so that OA-S can correctly
+attribute your password to your repository.
+
+Next enter the OA-S statistics server and SALT server information into the
+corresponding form fields and save your configuration.
+
+If the data you entered is not valid you'll receive error messages that will
+help you correct the error.
+
+
+Configuration (OJS)
+-------------------
+
+Some of the statistics use cases may require you to configure a "main metric".
+This will only be necessary if you have more than one statistics plugin
+configured for OJS or if you have a statistics plugin that provides more than
+one metric.
+
+In this case (and only then) you'll find a site-level "main metric" selector
+on the administrator's site settings page and on journal level on the journal
+manager's 'stats & reports' page.
+
+If you select a "main metric" on site level but not on journal level, then the
+site level metric will be used by default for all journals.
+
+With this in mind please configure a "main metric" on site level and
+(optionally) on journal level if necessary.  
+
+
+Updating Statistics
+-------------------
+
+Once you configured your plugin, you automatically start collecting statistics
+data that will then be harvested by the OA-S project. If you configured the
+plugin correctly then this will work without requiring further interference on
+your side.
+
+OA-S will provide the aggregate statistics on their side. To download the
+statistics data to your OJS installation you have two different options:
+
+ - If you know how to install and configure a cron job then this is the
+   preferred configuration.
+   
+   Please install a cron job with the following parameters:
+   
+   working directory: your OJS installation directory
+   command line:
+     #> php tools/runScheduledTask.php plugins/generic/oas/scheduledTasks.xml
+   schedule: daily, monthly or less, depending on how often you'd like your
+     statistics to be updated.
+   
+ - If you don't know how to configure a cron job or if you want to update
+   statistics manually then you have to go to the plugin settings page to update
+   your data. On this settings page you'll find an "Update Statistics" button.
+   Click it to download all available statistics files from the OA-S server.
+   
+
+Using OA-S statistics
+---------------------
+
+OA-S statistics can be used exactly in the same way as other statistics in OJS.
+You can generate reports and the statistics will be shown and / or used in
+different places in OJS. See the introductory list of potential statistics use
+cases in this README.
+
+These use cases are not specific to the OA-S statistics plugin. Please refer
+to the general OJS documentation for more information.
