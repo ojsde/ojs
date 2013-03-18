@@ -129,16 +129,17 @@ class OasEventStagingDAO extends PKPOAIDAO {
 		$validClassifiers = array(OAS_PLUGIN_CLASSIFICATION_ADMIN);
 		$identifiers = is_array($usageEvent['identifiers']) ? $usageEvent['identifiers'] : array();
 
-		// Set the service type (if any). See: http://www.openurl.info/registry/docs/xsd/info:ofi/fmt:xml:xsd:sch_svc
+		// Set the service type. See: http://www.openurl.info/registry/docs/xsd/info:ofi/fmt:xml:xsd:sch_svc
 		$serviceTypes = array();
-		switch($usageEvent['assocType']) {
-			case ASSOC_TYPE_ARTICLE:
-				$serviceTypes[] = 'abstract';
-				break;
-
-			case ASSOC_TYPE_GALLEY:
-				$serviceTypes[] = 'fulltext';
-				break;
+		if ($usageEvent['assocType'] == ASSOC_TYPE_ARTICLE) {
+			$serviceTypes[] = 'abstract';
+		} else {
+			// If we do not set either abstract or fulltext then the
+			// event will not be counted on OA-S' side. Source: Skype
+			// with Matthias Hitzler on 18/03/2013. That's why we set
+			// 'fulltext' for all assoc types even when it doen't really
+			// fit.
+			$serviceTypes[] = 'fulltext';
 		}
 
 		// Has the IP. We do this here so that it will be impossible to
