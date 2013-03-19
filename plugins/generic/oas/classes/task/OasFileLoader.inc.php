@@ -144,10 +144,11 @@ class OasFileLoader extends FileLoader {
 			// Other dimensions.
 			$record['day'] = str_replace('-', '', $rawData['date']);
 			$record['metric_type'] = 'oas::counter';
-			$record['metric'] = (int) $rawData['counter'];
-			// TODO: find out when to load counter_abstract and when counter.
-			// This can only be done when we get our test data back as the exact
-			// semantics of these fields has not been specified by OA-S.
+			if ($assocType == ASSOC_TYPE_ARTICLE) {
+				$record['metric'] = (int) $rawData['counter_abstract'];
+			} else {
+				$record['metric'] = (int) $rawData['counter'];
+			}
 
 			// Load the record into the database.
 			$metricsDao->insertRecord($record);

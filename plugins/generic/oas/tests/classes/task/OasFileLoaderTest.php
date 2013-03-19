@@ -45,6 +45,7 @@ class OasFileLoaderTest extends DatabaseTestCase {
 		@unlink($fileLoader->getStagePath() . $testFile);
 		@unlink($fileLoader->getRejectPath() . $testFile);
 		@unlink($fileLoader->getArchivePath() . $testFile);
+		parent::tearDown();
 	}
 
 
@@ -66,7 +67,7 @@ class OasFileLoaderTest extends DatabaseTestCase {
 
 		// Check that the file was correctly loaded.
 		$expectedResult = array(
-			array(ASSOC_TYPE_ARTICLE, 1, 20121110, 201211, 'oas::counter', '2012-11-10_2012-11-10.csv', 0, null, 1, 1, 1),
+			array(ASSOC_TYPE_ARTICLE, 1, 20121110, 201211, 'oas::counter', '2012-11-10_2012-11-10.csv', 8, null, 1, 1, 1),
 			array(ASSOC_TYPE_GALLEY, 2, 20121110, 201211, 'oas::counter', '2012-11-10_2012-11-10.csv', 12, null, 1, 1, 1),
 			array(ASSOC_TYPE_GALLEY, 3, 20121110, 201211, 'oas::counter', '2012-11-10_2012-11-10.csv', 6, null, 1, 1, 1),
 			array(ASSOC_TYPE_SUPP_FILE, 1, 20121110, 201211, 'oas::counter', '2012-11-10_2012-11-10.csv', 5, null, 1, 1, 1),
