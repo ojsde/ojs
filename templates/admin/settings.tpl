@@ -155,7 +155,7 @@
 	<p>{translate key="admin.settings.oaiRegistrationDescription" siteUrl=$siteUrl oaiUrl=$oaiUrl}</p>
 </div>
 
-{if count($availableMetricTypes) > 2}
+{if count($availableMetricTypes) > 1}
 	<br />
 	<div id="defaultMetricSelection">
 		<h4>{translate key="defaultMetric.title"}</h4>
