@@ -26,8 +26,13 @@ class LuceneHandler extends Handler {
 	function LuceneHandler(&$request) {
 		parent::Handler();
 		$router =& $request->getRouter();
+		$page = $router->getRequestedPage($request);
 		$journal =& $router->getContext($request);
-		$this->addCheck(new HandlerValidatorCustom($this, false, null, null, create_function('$journal', 'return !$journal || $journal->getSetting(\'publishingMode\') != PUBLISHING_MODE_NONE;'), array($journal)));
+		if ($page == 'usageMetricBoost') {
+			$this->addCheck(new HandlerValidatorCustom($this, false, null, null, create_function('$journal', 'return is_null($journal);'), array($journal)));
+		} else {
+			$this->addCheck(new HandlerValidatorCustom($this, false, null, null, create_function('$journal', 'return !$journal || $journal->getSetting(\'publishingMode\') != PUBLISHING_MODE_NONE;'), array($journal)));
+		}
 	}
 
 
@@ -156,6 +161,26 @@ class LuceneHandler extends Handler {
 			'query' => implode(' ', $searchTerms),
 		);
 		$request->redirect(null, 'search', 'search', null, $searchParams);
+	}
+
+	/**
+	 * If the "ranking-by-metric" feature is enabled then this
+	 * handler returns a file with normalized boost data.
+	 * @param $args array
+	 * @param $request Request
+	 */
+	function usageMetricBoost($args, &$request) {
+		$this->validate(null, $request);
+
+		// We return a text file.
+		header('Content-type: text/plain');
+
+		// Only allow external report generation in the pull scenario.
+		$lucenePlugin =& $this->_getLucenePlugin();
+		if (!$lucenePlugin->getSetting(0, 'pullIndexing')) return;
+
+		// Generate (and output) the report.
+		if (!$lucenePlugin->generateBoostFile());
 	}
 
 
