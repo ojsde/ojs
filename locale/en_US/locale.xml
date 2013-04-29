@@ -331,6 +331,18 @@
 	<message key="comments.commentsOnArticle">Comments on this article</message>
 	<message key="comments.authenticated"><![CDATA[by <a href="{$publicProfileUrl}" target="_parent">{$userName}</a>]]></message>
 
+	<!-- Search -->
+	<message key="search.results.orderBy">Order results by</message>
+	<message key="search.results.orderBy.article">Article Title</message>
+	<message key="search.results.orderBy.author">Author</message>
+	<message key="search.results.orderBy.date">Publication Date</message>
+	<message key="search.results.orderBy.issue">Issue</message>
+	<message key="search.results.orderBy.journal">Journal Title</message>
+	<message key="search.results.orderBy.popularity">Popularity</message>
+	<message key="search.results.orderBy.relevance">Relevance</message>
+	<message key="search.results.orderDir.asc">Ascending</message>
+	<message key="search.results.orderDir.desc">Descending</message>
+
 	<!-- Site Administration -->
 
 	<message key="admin.settings.oaiRegistrationDescription"><![CDATA[To have the contents of all journals hosted on this site indexed within a globally distributed system of research databases, <a href="http://pkp.sfu.ca/harvester/add.php" target="_blank">register</a> your site's URL with the Public Knowledge Project metadata <a href="http://pkp.sfu.ca/harvester/" target="_blank">harvester</a>. This tool collects the metadata from each indexed item in this journal, enabling accurate and collective searching among the research sites that adhere to the <a href="http://www.openarchives.org/OAI/openarchivesprotocol.htm#Introduction" target="_blank">Open Archives Initiative Protocol for Metadata Harvesting</a>.

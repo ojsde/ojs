@@ -76,11 +76,12 @@ class ArticleSearchTest extends PKPTestCase {
 		HookRegistry::clear('ArticleSearch::retrieveResults');
 
 		// Test a simple search with a mock database back-end.
+		$request = $this->mockRequest();
 		$journal = new Journal();
 		$keywords = array(null => 'test');
 		$articleSearch = new ArticleSearch();
 		$error = '';
-		$searchResult = $articleSearch->retrieveResults($journal, $keywords, $error);
+		$searchResult = $articleSearch->retrieveResults($request, $journal, $keywords, $error);
 
 		// Test whether the result from the mocked DAOs is being returned.
 		self::assertInstanceOf('ItemIterator', $searchResult);
@@ -94,7 +95,7 @@ class ArticleSearchTest extends PKPTestCase {
 		$this->registerMockIssueDAO(false);
 		$this->registerMockArticleSearchDAO(); // This is necessary to instantiate a fresh iterator.
 		$keywords = array(null => 'test');
-		$searchResult = $articleSearch->retrieveResults($journal, $keywords, $error);
+		$searchResult = $articleSearch->retrieveResults($request, $journal, $keywords, $error);
 		self::assertTrue($searchResult->eof());
 	}
 
@@ -122,18 +123,21 @@ class ArticleSearchTest extends PKPTestCase {
 
 		foreach($testCases as $testCase) {
 			// Test a simple search with the simulated callback.
+			$request = $this->mockRequest();
 			$journal = new Journal();
 			$keywords = $testCase;
 			$articleSearch = new ArticleSearch();
-			$searchResult = $articleSearch->retrieveResults($journal, $keywords, $error, $testFromDate, $testToDate);
+			$searchResult = $articleSearch->retrieveResults($request, $journal, $keywords, $error, $testFromDate, $testToDate);
 
 			// Check the parameters passed into the callback.
+			$expectedOrderBy = 'score';
+			$expectedOrderDir = 'desc';
 			$expectedPage = 1;
 			$expectedItemsPerPage = 20;
 			$expectedTotalResults = 3;
 			$expectedError = '';
 			$expectedParams = array(
-				$journal, $testCase, $testFromDate, $testToDate,
+				$journal, $testCase, $testFromDate, $testToDate, $expectedOrderBy, $expectedOrderDir,
 				$expectedPage, $expectedItemsPerPage, $expectedTotalResults,
 				$expectedError
 			);
@@ -141,7 +145,8 @@ class ArticleSearchTest extends PKPTestCase {
 
 			// Test and clear the call history of the hook registry.
 			$calledHooks = HookRegistry::getCalledHooks();
-			self::assertEquals('ArticleSearch::retrieveResults', $calledHooks[0][0]);
+			$lastHook = array_pop($calledHooks);
+			self::assertEquals('ArticleSearch::retrieveResults', $lastHook[0]);
 			HookRegistry::resetCalledHooks();
 
 			// Test whether the result from the hook is being returned.
@@ -174,7 +179,7 @@ class ArticleSearchTest extends PKPTestCase {
 		$this->_retrieveResultsParams = $params;
 
 		// Test returning count by-ref.
-		$totalCount =& $params[6];
+		$totalCount =& $params[8];
 		$totalCount = 3;
 
 		// Mock a result set and return it.

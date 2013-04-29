@@ -10,10 +10,10 @@
  * @ingroup tests_functional_plugins_generic_lucene
  * @see LucenePlugin
  *
- * @brief Integration/Functional test for the "ranking-by-metric" feature of
- * the lucene plug-in.
+ * @brief Integration/Functional test for the "ranking-by-metric" and
+ * "sorting-by-metric" features of the lucene plug-in.
  *
- * FEATURE: ranking by metric
+ * FEATURE: ranking and sorting by metric
  */
 
 
@@ -39,9 +39,11 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 	protected function setUp() {
 		parent::setUp();
 
-		// Make sure that pull indexing is disabled by default.
+		// Make sure that relevant features are disabled by default.
 		$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO'); /* @var $pluginSettingsDao PluginSettingsDAO */
 		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'pullIndexing', false);
+		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'rankingByMetric', false);
+		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'sortingByMetric', false);
 
 		// Move existing external field files to a temporary directory.
 		$this->tempDir = tempnam(sys_get_temp_dir(), 'pkp');
@@ -243,6 +245,52 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 		$this->checkRanking(array(4, 3, 2, 1));
 	}
 
+	/**
+	 * SCENARIO: sorting by metric option
+	 *   GIVEN I enabled the sorting-by-metric feature
+	 *    WHEN I execute a search
+	 *    THEN I'll see an additional order-by option "Popularity".
+	 *
+	 * SCENARIO: sorting by metric effect
+	 *   GIVEN I enabled the sorting-by-metric feature
+	 *     AND I placed an external ranking file into the lucene index
+	 *         folder that establishes the following article order by
+	 *         descending usage statistics:
+	 *           article 4, article 3, article 2, article 1
+	 *     AND I executed a search that does not order articles by metric
+	 *         [e.g. '+ranking +("article 1"^1.5 "article 2"^1.3 "article 3"^1.1
+	 *         "article 4")']
+	 *    WHEN I select the "Popularity" order-by option
+	 *    THEN the result will be re-ordered (default: descending order) by the
+	 *         order established in the ranking file, i.e. article 4, 3, 2, 1.
+	 */
+	function testSortingByMetric() {
+		// Execute a search (not influenced by statistics).
+		$this->checkRanking(array(1, 2, 3, 4));
+
+		// Make sure that the "Popularity" option is missing unless
+		// the sorting-by-metric feature was enabled.
+		$this->waitForElementPresent('name=searchResultOrder');
+		$this->assertSelectNotHasOption('name=searchResultOrder', 'Popularity');
+
+		// Enable the sorting-by-metric feature.
+		$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO'); /* @var $pluginSettingsDao PluginSettingsDAO */
+		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'sortingByMetric', true);
+
+		// Execute a search (which should not be influenced by statistics
+		// even if we load a ranking file).
+		$this->copyTestRankingFile();
+		$this->checkRanking(array(1, 2, 3, 4));
+
+		// Make sure that we have an additional order-by option "Popularity".
+		$this->waitForElementPresent('name=searchResultOrder');
+		$this->assertSelectHasOption('name=searchResultOrder', 'Popularity');
+
+		// If we sort by "Popularity" then we expect the result order to reverse.
+		$this->selectAndWait('name=searchResultOrder', "value=popularity");
+		$this->checkRanking(array(4, 3, 2, 1), false);
+	}
+
 
 	//
 	// Private helper methods.
@@ -260,23 +308,6 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 
 		// Make the Lucene server aware of the new file.
 		$this->verifyAndOpen('http://localhost:8983/solr/ojs/reloadExternalFiles');
-	}
-
-	/**
-	 * Check the ranking of four test articles.
-	 * @param $expectedRanking array
-	 */
-	private function checkRanking($expectedRanking) {
-		// Execute a search that shows four articles and check that
-		// they are presented in the expected order.
-		$weightedSearch = '+ranking +("article 1"^1.5 "article 2"^1.3 "article 3" "article 4")';
-		$this->simpleSearch($weightedSearch);
-		$row = 3; // The first table row containing an article.
-		foreach ($expectedRanking as $currentArticle) {
-			$articleTitle = $this->getTable("css=table.listing.$row.1");
-			self::assertEquals("Ranking Test Article $currentArticle", $articleTitle);
-			$row += 3; // One result takes up three table rows.
-		}
 	}
 }
 ?>

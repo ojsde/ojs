@@ -105,7 +105,49 @@
 	</div>
 	<br />
 
-	{call_hook name="Templates::Search::SearchResults::PreResults"}
+	<div id="preResults" class="pkp_pages_search_preResults">
+		{call_hook name="Templates::Search::SearchResults::PreResults"}
+
+		<div id="searchOrdering" class="pkp_pages_search_preResults_ordering">
+			{translate key="search.results.orderBy"}:&nbsp;
+			<select id="searchResultOrder" name="searchResultOrder" class="selectMenu">
+				{html_options options=$searchResultOrderOptions selected=$orderBy}
+			</select>
+			&nbsp;
+			<select id="searchResultOrderDir" name="searchResultOrderDir" class="selectMenu">
+				{html_options options=$searchResultOrderDirOptions selected=$orderDir}
+			</select>
+			&nbsp;
+
+			<script type="text/javascript">
+				// Get references to the required elements.
+				var $orderBySelect = $('#content #searchResultOrder');
+				var $orderDirSelect = $('#content #searchResultOrderDir');
+
+				function searchResultReorder(useDefaultOrderDir) {ldelim}
+					var reorderUrl = '{strip}
+							{url query=$query searchJournal=$searchJournal
+								authors=$authors title=$title abstract=$abstract galleyFullText=$galleyFullText suppFiles=$suppFiles
+								discipline=$discipline subject=$subject type=$type coverage=$coverage
+								dateFromMonth=$dateFromMonth dateFromDay=$dateFromDay dateFromYear=$dateFromYear
+								dateToMonth=$dateToMonth dateToDay=$dateToDay dateToYear=$dateToYear escape=false}
+						{/strip}';
+					var orderBy = $orderBySelect.val();
+					if (useDefaultOrderDir) {ldelim}
+						var orderDir = '';
+					{rdelim} else {ldelim}
+						var orderDir = $orderDirSelect.val();
+					{rdelim}
+					reorderUrl += '&orderBy=' + orderBy + '&orderDir=' + orderDir;
+					window.location = reorderUrl;
+				{rdelim}
+
+				$orderBySelect.change(function() {ldelim} searchResultReorder(true); {rdelim});
+				$orderDirSelect.change(function() {ldelim} searchResultReorder(false); {rdelim});
+			</script>
+		</div>
+		<div style="clear: both"> </div>
+	</div>
 
 	<div id="results">
 		<table width="100%" class="listing">

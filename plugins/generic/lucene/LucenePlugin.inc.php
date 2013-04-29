@@ -125,6 +125,7 @@ class LucenePlugin extends GenericPlugin {
 			}
 
 			// Register callbacks (controller-level).
+			HookRegistry::register('ArticleSearch::getResultSetOrderingOptions', array(&$this, 'callbackGetResultSetOrderingOptions'));
 			HookRegistry::register('ArticleSearch::retrieveResults', array(&$this, 'callbackRetrieveResults'));
 			HookRegistry::register('ArticleSearchIndex::articleMetadataChanged', array(&$this, 'callbackArticleMetadataChanged'));
 			HookRegistry::register('ArticleSearchIndex::articleFileChanged', array(&$this, 'callbackArticleFileChanged'));
@@ -416,29 +417,38 @@ class LucenePlugin extends GenericPlugin {
 	// Controller level hook implementations.
 	//
 	/**
+	 * @see ArticleSearch::getResultSetOrderingOptions()
+	 */
+	function callbackGetResultSetOrderingOptions($hookName, $params) {
+		$resultSetOrderingOptions =& $params[1];
+
+		// Only show the "popularity" option when sorting-by-metric is enabled.
+		if (!$this->getSetting(0, 'sortingByMetric')) {
+			unset($resultSetOrderingOptions['popularity']);
+		}
+	}
+
+	/**
 	 * @see ArticleSearch::retrieveResults()
 	 */
 	function callbackRetrieveResults($hookName, $params) {
 		assert($hookName == 'ArticleSearch::retrieveResults');
 
 		// Unpack the parameters.
-		list($journal, $keywords, $fromDate, $toDate, $page, $itemsPerPage, $dummy) = $params;
-		$totalResults =& $params[6]; // need to use reference
-		$error =& $params[7]; // need to use reference
+		list($journal, $keywords, $fromDate, $toDate, $orderBy, $orderDir, $page, $itemsPerPage, $dummy) = $params;
+		$totalResults =& $params[8]; // need to use reference
+		$error =& $params[9]; // need to use reference
 
 		// Instantiate a search request.
 		$searchRequest = new SolrSearchRequest();
 		$searchRequest->setJournal($journal);
 		$searchRequest->setFromDate($fromDate);
 		$searchRequest->setToDate($toDate);
+		$searchRequest->setOrderBy($orderBy);
+		$searchRequest->setOrderDir($orderDir == 'asc' ? true : false);
 		$searchRequest->setPage($page);
 		$searchRequest->setItemsPerPage($itemsPerPage);
 		$searchRequest->addQueryFromKeywords($keywords);
-
-		// Get the ordering criteria.
-		list($orderBy, $orderDir) = $this->_getResultSetOrdering($journal);
-		$searchRequest->setOrderBy($orderBy);
-		$searchRequest->setOrderDir($orderDir == 'asc' ? true : false);
 
 		// Configure alternative spelling suggestions.
 		$spellcheck = (boolean)$this->getSetting(0, 'spellcheck');
@@ -747,24 +757,12 @@ class LucenePlugin extends GenericPlugin {
 		$template = $params[1];
 		if ($template != 'search/search.tpl') return false;
 
-		// Get request and context.
+		// Get the request.
 		$request =& PKPApplication::getRequest();
-		$journal =& $request->getContext();
 
 		// Assign our private stylesheet.
 		$templateMgr =& $params[0];
 		$templateMgr->addStylesheet($request->getBaseUrl() . '/' . $this->getPluginPath() . '/templates/lucene.css');
-
-		// Result set ordering options.
-		$orderByOptions = $this->_getResultSetOrderingOptions($journal);
-		$templateMgr->assign('luceneOrderByOptions', $orderByOptions);
-		$orderDirOptions = $this->_getResultSetOrderingDirectionOptions();
-		$templateMgr->assign('luceneOrderDirOptions', $orderDirOptions);
-
-		// Result set ordering selection.
-		list($orderBy, $orderDir) = $this->_getResultSetOrdering($journal);
-		$templateMgr->assign('orderBy', $orderBy);
-		$templateMgr->assign('orderDir', $orderDir);
 
 		// Instant search.
 		if ($this->getSetting(0, 'instantSearch')) {
@@ -899,11 +897,12 @@ class LucenePlugin extends GenericPlugin {
 	 */
 	function generateBoostFile($output = true) {
 		// Check error conditions:
-		// - the "ranking-by-metric" feature is not enabled
+		// - the "ranking/sorting-by-metric" feature is not enabled
 		// - a "main metric" is not configured
 		$application = PKPApplication::getApplication();
 		$metricType = $application->getDefaultMetricType();
-		if (!$this->getSetting(0, 'rankingByMetric') || empty($metricType)) return;
+		if (!($this->getSetting(0, 'rankingByMetric') || $this->getSetting(0, 'sortingByMetric')) ||
+				empty($metricType)) return;
 
 		// Retrieve a usage report for all articles ordered by the article ID.
 		// Ordering seems to be important, see the remark about pre-sorting the file here:
@@ -973,74 +972,6 @@ class LucenePlugin extends GenericPlugin {
 			)
 		);
 		$templateMgr->assign('pageHierarchy', $pageCrumbs);
-	}
-
-	/**
-	 * Return the available options for result
-	 * set ordering.
-	 * @param $journal Journal
-	 * @return array
-	 */
-	function _getResultSetOrderingOptions($journal) {
-		$resultSetOrderingOptions = array(
-			'score' => __('plugins.generic.lucene.results.orderBy.relevance'),
-			'authors' => __('plugins.generic.lucene.results.orderBy.author'),
-			'issuePublicationDate' => __('plugins.generic.lucene.results.orderBy.issue'),
-			'publicationDate' => __('plugins.generic.lucene.results.orderBy.date'),
-			'title' => __('plugins.generic.lucene.results.orderBy.article')
-		);
-
-		// Only show the "journal title" option if we have several journals.
-		if (!is_a($journal, 'Journal')) {
-			$resultSetOrderingOptions['journalTitle'] = __('plugins.generic.lucene.results.orderBy.journal');
-		}
-
-		return $resultSetOrderingOptions;
-	}
-
-	/**
-	 * Return the available options for the result
-	 * set ordering direction.
-	 * @return array
-	 */
-	function _getResultSetOrderingDirectionOptions() {
-		return array(
-			'asc' => __('plugins.generic.lucene.results.orderDir.asc'),
-			'desc' => __('plugins.generic.lucene.results.orderDir.desc')
-		);
-	}
-
-	/**
-	 * Return the currently selected result
-	 * set ordering option (default: descending relevance).
-	 * @param $journal Journal
-	 * @return array An array with the order field as the
-	 *  first entry and the order direction as the second
-	 *  entry.
-	 */
-	function _getResultSetOrdering($journal) {
-		// Retrieve the request.
-		$request =& Application::getRequest();
-
-		// Order field.
-		$orderBy = $request->getUserVar('orderBy');
-		$orderByOptions = $this->_getResultSetOrderingOptions($journal);
-		if (is_null($orderBy) || !in_array($orderBy, array_keys($orderByOptions))) {
-			$orderBy = 'score';
-		}
-
-		// Ordering direction.
-		$orderDir = $request->getUserVar('orderDir');
-		$orderDirOptions = $this->_getResultSetOrderingDirectionOptions();
-		if (is_null($orderDir) || !in_array($orderDir, array_keys($orderDirOptions))) {
-			if (in_array($orderBy, array('score', 'publicationDate', 'issuePublicationDate'))) {
-				$orderDir = 'desc';
-			} else {
-				$orderDir = 'asc';
-			}
-		}
-
-		return array($orderBy, $orderDir);
 	}
 
 	/**
@@ -1255,8 +1186,8 @@ class LucenePlugin extends GenericPlugin {
 		// Make sure that we have an embedded server.
 		if ($this->getSetting(0, 'pullIndexing')) return;
 
-		// Make sure that the ranking-by-metric feature is enabled.
-		if (!$this->getSetting(0, 'rankingByMetric')) return;
+		// Make sure that the ranking/sorting-by-metric feature is enabled.
+		if (!($this->getSetting(0, 'rankingByMetric') || $this->getSetting(0, 'sortingByMetric'))) return;
 
 		// Construct the file name.
 		$ds = DIRECTORY_SEPARATOR;
