@@ -46,6 +46,7 @@ class ArticleSearchTest extends PKPTestCase {
 	 */
 	protected function setUp() {
 		parent::setUp();
+		HookRegistry::rememberCalledHooks();
 
 		// Prepare the mock environment for this test.
 		$this->registerMockArticleSearchDAO();
@@ -147,7 +148,7 @@ class ArticleSearchTest extends PKPTestCase {
 			$calledHooks = HookRegistry::getCalledHooks();
 			$lastHook = array_pop($calledHooks);
 			self::assertEquals('ArticleSearch::retrieveResults', $lastHook[0]);
-			HookRegistry::resetCalledHooks();
+			HookRegistry::resetCalledHooks(true);
 
 			// Test whether the result from the hook is being returned.
 			self::assertInstanceOf('VirtualArrayIterator', $searchResult);
@@ -216,14 +217,18 @@ class ArticleSearchTest extends PKPTestCase {
 
 		// Mock a result set.
 		$searchResult = array(
-			array('article_id' => ARTICLE_SEARCH_TEST_DEFAULT_ARTICLE, 'count' => 3)
+			ARTICLE_SEARCH_TEST_DEFAULT_ARTICLE => array(
+				'count' => 3,
+				'journal_id' => 2,
+				'issuePublicationDate' => '2013-05-01 20:30:00',
+				'publicationDate' => '2013-05-01 20:30:00'
+			)
 		);
-		$searchResultIterator = new ArrayItemIterator($searchResult);
 
 		// Mock the getPhraseResults() method.
 		$articleSearchDAO->expects($this->any())
 		                 ->method('getPhraseResults')
-		                 ->will($this->returnValue($searchResultIterator));
+		                 ->will($this->returnValue($searchResult));
 
 		// Register the mock DAO.
 		DAORegistry::registerDAO('ArticleSearchDAO', $articleSearchDAO);
