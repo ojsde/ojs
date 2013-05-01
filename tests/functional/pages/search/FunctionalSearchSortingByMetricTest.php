@@ -19,7 +19,7 @@
 
 import('tests.functional.pages.search.FunctionalSearchBaseTestCase');
 
-class FunctionalSearchSortingTest extends FunctionalSearchBaseTestCase {
+class FunctionalSearchSortingByMetricTest extends FunctionalSearchBaseTestCase {
 
 	//
 	// Implement template methods from WebTestCase
@@ -103,7 +103,6 @@ class FunctionalSearchSortingTest extends FunctionalSearchBaseTestCase {
 		$singleJournalOrderingOptions = $this->getSelectOptions('searchResultOrder');
 		$this->assertFalse(in_array('Journal Title', $singleJournalOrderingOptions));
 
-
 		// Test ordering of a multi-journal search.
 		$multiJournalExamples = array(
 			array('searchResultOrder', 'issuePublicationDate', array(3, 4)), // Default: descending
@@ -121,16 +120,29 @@ class FunctionalSearchSortingTest extends FunctionalSearchBaseTestCase {
 	}
 
 	/**
-	 * SCENARIO: sorting by metric effect
+	 * SCENARIO: sorting by metric effect (all time)
 	 *   GIVEN I simulate a metrics table that establishes the following article
-	 *         order by descending usage statistics:
+	 *         order by descending all-time usage statistics:
+	 *           article 4, article 3, article 1, article 2
+	 *     AND I executed a search that does not order articles by metric
+	 *         [e.g. 'article']
+	 *    WHEN I select the "Popularity (All Time)" order-by option
+	 *    THEN the result will be re-ordered (default: descending order) by the
+	 *         order established in the ranking file, i.e. article 4, 3, 1, 2.
+	 *
+	 * SCENARIO: sorting by metric effect (last month only)
+	 *   GIVEN I simulate a metrics table that establishes the following article
+	 *         order by descending all-time usage statistics:
+	 *           article 4, article 3, article 1, article 2
+	 *     AND I divide the statistics in time such that it establishes the
+	 *         following article order by descending usage statistics for the
+	 *         last month only:
 	 *           article 4, article 3, article 2, article 1
 	 *     AND I executed a search that does not order articles by metric
 	 *         [e.g. 'article']
-	 *    WHEN I select the "Popularity" order-by option
+	 *    WHEN I select the "Popularity (Last Month)" order-by option
 	 *    THEN the result will be re-ordered (default: descending order) by the
 	 *         order established in the ranking file, i.e. article 4, 3, 2, 1.
-	 * @group current
 	 */
 	function testSortingByMetric() {
 		// Prepare the metrics table.
@@ -138,10 +150,12 @@ class FunctionalSearchSortingTest extends FunctionalSearchBaseTestCase {
 		// to make sure that the metrics DAO can handle them.
 		$metricsDao = DAORegistry::getDAO('MetricsDAO'); /* @var $metricsDao MetricsDAO */
 		$metricsDao->retrieve('TRUNCATE TABLE metrics');
+		// The usage data of the current month will establish the order
+		// article 4, 3, 2, 1 by last month's popularity.
 		$record = array(
 			'load_id' => 'functional test data',
 			'assoc_type' => ASSOC_TYPE_ARTICLE,
-			'day' => '20130415',
+			'day' => date('Ymd'),
 			'metric_type' => 'oas::counter'
 		);
 		$metric = 5;
@@ -152,15 +166,28 @@ class FunctionalSearchSortingTest extends FunctionalSearchBaseTestCase {
 			$metric += 5;
 		}
 
-		// Make sure that we have an additional order-by option "Popularity".
+		// Now add a single record older than one month that simulates
+		// usage for article 1 higher than article 2.
+		$record['day'] = date('Ymd', strtotime('-1 year'));
+		$record['metric'] = 7;
+		$record['assoc_id'] = 9;
+		$metricsDao->insertRecord($record);
+
+		// Make sure that we have additional popularity order-by options.
 		$this->simpleSearch('article');
 		$this->waitForElementPresent('name=searchResultOrder');
-		$this->assertSelectHasOption('name=searchResultOrder', 'Popularity');
+		$this->assertSelectHasOption('name=searchResultOrder', 'Popularity (All Time)');
+		$this->assertSelectHasOption('name=searchResultOrder', 'Popularity (Last Month)');
 
-		// If we sort by "Popularity" then we expect the result order to reverse.
-		$this->selectAndWait('name=searchResultOrder', "value=popularity");
+		// If we sort by "Popularity (Last Month)" then we expect the result order 4, 3, 2, 1.
+		$this->selectAndWait('name=searchResultOrder', "value=popularityMonth");
 		$this->checkRanking(array(4, 3, 2, 1), false, 3);
 
+		// If we sort by "Popularity (All Time)" then we expect articles one and two to be reversed.
+		$this->selectAndWait('name=searchResultOrder', "value=popularityAll");
+		$this->checkRanking(array(4, 3, 1, 2), false, 3);
+
+		// Make a counter check.
 		$metricsDao->purgeLoadBatch('functional test data');
 		foreach (array(9, 10, 11, 12) as $articleId) {
 			$record['assoc_id'] = $articleId;

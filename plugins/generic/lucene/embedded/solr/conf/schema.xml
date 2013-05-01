@@ -443,7 +443,8 @@
          field name or dynamic field (e.g. unsupported locales). -->
     <dynamicField name="*" type="ignored" multiValued="true" />
     
-    <field name="usageMetric" type="externalFile" multiValued="false" />
+    <field name="usageMetricAll" type="externalFile" multiValued="false" />
+    <field name="usageMetricMonth" type="externalFile" multiValued="false" />
   </fields>
 
   <!-- Field to use to determine and enforce document uniqueness.

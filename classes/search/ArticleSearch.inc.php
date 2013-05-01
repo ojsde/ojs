@@ -222,7 +222,7 @@ class ArticleSearch {
 		$articleDao = DAORegistry::getDAO('ArticleDAO'); /* @var $articleDao ArticleDAO */
 		$journalDao = DAORegistry::getDAO('JournalDAO'); /* @var $journalDao JournalDAO */
 		$journalTitles = array();
-		if ($orderBy == 'popularity') {
+		if ($orderBy == 'popularityAll' || $orderBy == 'popularityMonth') {
 			$application = PKPApplication::getApplication();
 			$metricType = $application->getDefaultMetricType();
 			if (is_null($metricType)) {
@@ -235,6 +235,11 @@ class ArticleSearch {
 					STATISTICS_DIMENSION_ASSOC_TYPE => array(ASSOC_TYPE_GALLEY, ASSOC_TYPE_ARTICLE),
 					STATISTICS_DIMENSION_ARTICLE_ID => array(array_keys($unorderedResults))
 				);
+				if ($orderBy == 'popularityMonth') {
+					$oneMonthAgo = date('Ymd', strtotime('-1 month'));
+					$today = date('Ymd');
+					$filter[STATISTICS_DIMENSION_DAY] = array('from' => $oneMonthAgo, 'to' => $today);
+				}
 				$rawReport = $application->getMetrics($metricType, $column, $filter);
 				foreach ($rawReport as $row) {
 					$unorderedResults[$row['article_id']]['metric'] = (int)$row['metric'];
@@ -272,7 +277,8 @@ class ArticleSearch {
 					$orderKey = $data[$orderBy];
 					break;
 
-				case 'popularity':
+				case 'popularityAll':
+				case 'popularityMonth':
 					$orderKey = (isset($data['metric']) ? $data['metric'] : 0);
 					break;
 
@@ -589,11 +595,12 @@ class ArticleSearch {
 			'title' => __('search.results.orderBy.article')
 		);
 
-		// Only show the "popularity" option if we have a default metric.
+		// Only show the "popularity" options if we have a default metric.
 		$application = PKPApplication::getApplication();
 		$metricType = $application->getDefaultMetricType();
 		if (!is_null($metricType)) {
-			$resultSetOrderingOptions['popularity'] = __('search.results.orderBy.popularity');
+			$resultSetOrderingOptions['popularityAll'] = __('search.results.orderBy.popularityAll');
+			$resultSetOrderingOptions['popularityMonth'] = __('search.results.orderBy.popularityMonth');
 		}
 
 		// Only show the "journal title" option if we have several journals.
@@ -643,7 +650,7 @@ class ArticleSearch {
 		$orderDir = $request->getUserVar('orderDir');
 		$orderDirOptions = ArticleSearch::getResultSetOrderingDirectionOptions();
 		if (is_null($orderDir) || !in_array($orderDir, array_keys($orderDirOptions))) {
-			if (in_array($orderBy, array('score', 'publicationDate', 'issuePublicationDate', 'popularity'))) {
+			if (in_array($orderBy, array('score', 'publicationDate', 'issuePublicationDate', 'popularityAll', 'popularityMonth'))) {
 				$orderDir = 'desc';
 			} else {
 				$orderDir = 'asc';

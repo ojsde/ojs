@@ -1120,12 +1120,15 @@ class SolrWebService extends XmlWebService {
 		}
 
 		// Special case: popularity ordering.
-		if ($field == 'popularity') {
+		if ($field == 'popularityAll') {
 			// The abs() function has no actual effect as our usage Metric
 			// is always positive. It is just a workaround so that we can use
 			// an external file field for sorting which would otherwise raise
 			// an exception (which is a Solr bug in version 3.6.1).
-			return 'abs(usageMetric)' . $dirString;
+			return 'abs(usageMetricAll)' . $dirString;
+		}
+		if ($field == 'popularityMonth') {
+			return 'abs(usageMetricMonth)' . $dirString;
 		}
 
 		// We order by descending relevance by default.

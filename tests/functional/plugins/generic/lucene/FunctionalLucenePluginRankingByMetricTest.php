@@ -84,23 +84,33 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 	 *    WHEN I access the .../index/lucene/usageMetricBoost endpoint
 	 *    THEN I download an empty text file.
 	 *
-	 * SCENARIO: generate external boost file for pull indexing
+	 * SCENARIO OUTLINE: generate external boost file for pull indexing
 	 *   GIVEN I enabled the ranking-by-metric and the pull indexing feature
-	 *     AND I collected the following usage data for the main metric:
+	 *     AND I collected the following usage data for the main metric (last month):
 	 *           article 1: no usage data
 	 *           article 2: 10 usage events
 	 *           article 3: 15 usage events
 	 *           article 4: 30 usage events
-	 *    WHEN I access the .../index/lucene/usageMetricBoost endpoint
-	 *    THEN I download a text file with boost data normalized by the formula
-	 *         2 ^ ((2 * value / max-value) - 1), i.e. the file should be
-	 *         indexed by the combination of the installation ID and the article
-	 *         ID and contain the following boost values:
-	 *           test-inst-1: no entry (i.e. defaults to 0.5 in Solr)
-	 *           test-inst-2=0.7937
-	 *           test-inst-3=1
-	 *           test-inst-4=2
+	 *     AND I collected the additional usage data for the main metric (one year ago):
+	 *           article 1: 40 usage events
+	 *    WHEN I access the .../index/lucene/usageMetricBoost endpoint with the
+	 *         filter parameter set to {time span}
+	 *    THEN I download a text {file with boost data} normalized by the formula
+	 *         2 ^ ((2 * value / max-value) - 1)
 	 *     AND the file is ordered by installation and article ID
+	 *
+	 * EXAMPLES:
+	 *   time span | file with boost data
+	 *   ==========|=====================================================
+	 *   month     | test-inst-1: no entry (i.e. defaults to 0.5 in Solr)
+	 *             | test-inst-2=0.7937
+	 *             | test-inst-3=1
+	 *             | test-inst-4=2
+	 *   all       | test-inst-1=2
+	 *             | test-inst-2=0.70711
+	 *             | test-inst-3=0.8409
+	 *             | test-inst-4=1.41421
+	 * @group current
 	 */
 	function testGenerateExternalBoostFile() {
 		// Prepare the metrics table.
@@ -116,19 +126,23 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 		foreach ($records as $record) {
 			$record['load_id'] = 'functional test data';
 			$record['assoc_type'] = ASSOC_TYPE_ARTICLE;
-			$record['day'] = '20130415';
+			$record['day'] = date('Ymd');
 			$record['metric_type'] = 'oas::counter';
 			$metricsDao->insertRecord($record);
 		}
+		$record['day'] = date('Ymd', strtotime('-1 year'));
+		$record['metric'] = 40;
+		$record['assoc_id'] = 9;
+		$metricsDao->insertRecord($record);
 
 		// Disable the ranking-by-metric feature.
 		$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO'); /* @var $pluginSettingsDao PluginSettingsDAO */
 		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'rankingByMetric', false);
 
 		// Check that the boost file is empty.
-		$handlerUrl = $this->baseUrl . '/index.php/index/lucene/usageMetricBoost';
+		$handlerUrl = $this->baseUrl . '/index.php/index/lucene/usageMetricBoost?filter=';
 		$curlCh = curl_init();
-		curl_setopt($curlCh, CURLOPT_URL, $handlerUrl);
+		curl_setopt($curlCh, CURLOPT_URL, $handlerUrl . 'all');
 		curl_setopt($curlCh, CURLOPT_RETURNTRANSFER, true);
 		$response = curl_exec($curlCh);
 		$this->assertEquals('', $response);
@@ -137,7 +151,10 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'rankingByMetric', true);
 		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'pullIndexing', true);
 
-		// Check the boost file.
+		// Check the boost files.
+		$response = curl_exec($curlCh);
+		$this->assertEquals("test-inst-9=2\ntest-inst-10=0.70711\ntest-inst-11=0.8409\ntest-inst-12=1.41421\n", $response);
+		curl_setopt($curlCh, CURLOPT_URL, $handlerUrl . 'month');
 		$response = curl_exec($curlCh);
 		$this->assertEquals("test-inst-10=0.7937\ntest-inst-11=1\ntest-inst-12=2\n", $response);
 	}
@@ -178,7 +195,7 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 		$this->waitForElementPresent('name=updateBoostFile');
 
 		// Copy "old" test ranking data to the index.
-		$this->copyTestRankingFile();
+		$this->copyTestRankingFiles();
 
 		// Check that the ranking corresponds to the "old" ranking data.
 		$this->checkRanking(array(4, 3, 2, 1));
@@ -228,8 +245,8 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 	 *    THEN I'll see the ranking order of the articles reversed.
 	 */
 	function testRankingByMetricEffect() {
-		// Activate an external ranking file.
-		$this->copyTestRankingFile();
+		// Activate the external ranking files.
+		$this->copyTestRankingFiles();
 
 		// Disable the ranking-by-metric feature.
 		$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO'); /* @var $pluginSettingsDao PluginSettingsDAO */
@@ -249,29 +266,35 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 	 * SCENARIO: sorting by metric option
 	 *   GIVEN I enabled the sorting-by-metric feature
 	 *    WHEN I execute a search
-	 *    THEN I'll see an additional order-by option "Popularity".
+	 *    THEN I'll see additional order-by options "Popularity (All Time)"
+	 *         and "Popularity (Last Month)".
 	 *
-	 * SCENARIO: sorting by metric effect
+	 * SCENARIO OUTLINE: sorting by metric effect
 	 *   GIVEN I enabled the sorting-by-metric feature
 	 *     AND I placed an external ranking file into the lucene index
-	 *         folder that establishes the following article order by
-	 *         descending usage statistics:
-	 *           article 4, article 3, article 2, article 1
+	 *         folder that establishes a well-ordered {ranking order}
 	 *     AND I executed a search that does not order articles by metric
 	 *         [e.g. '+ranking +("article 1"^1.5 "article 2"^1.3 "article 3"^1.1
 	 *         "article 4")']
-	 *    WHEN I select the "Popularity" order-by option
+	 *    WHEN I select the "Popularity ({time filter})" order-by option
 	 *    THEN the result will be re-ordered (default: descending order) by the
-	 *         order established in the ranking file, i.e. article 4, 3, 2, 1.
+	 *         {ranking order} established in the ranking file.
+	 *
+	 * EXAMPLES:
+	 *   time filter | ranking order
+	 *   ============|===========================================
+	 *   All Time    | article 4, article 3, article 2, article 1
+	 *   Last Month  | article 3, article 4, article 2, article 1
 	 */
 	function testSortingByMetric() {
 		// Execute a search (not influenced by statistics).
 		$this->checkRanking(array(1, 2, 3, 4));
 
-		// Make sure that the "Popularity" option is missing unless
+		// Make sure that the popularity options are missing unless
 		// the sorting-by-metric feature was enabled.
 		$this->waitForElementPresent('name=searchResultOrder');
-		$this->assertSelectNotHasOption('name=searchResultOrder', 'Popularity');
+		$this->assertSelectNotHasOption('name=searchResultOrder', 'Popularity (All Time)');
+		$this->assertSelectNotHasOption('name=searchResultOrder', 'Popularity (Last Month)');
 
 		// Enable the sorting-by-metric feature.
 		$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO'); /* @var $pluginSettingsDao PluginSettingsDAO */
@@ -279,16 +302,20 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 
 		// Execute a search (which should not be influenced by statistics
 		// even if we load a ranking file).
-		$this->copyTestRankingFile();
+		$this->copyTestRankingFiles();
 		$this->checkRanking(array(1, 2, 3, 4));
 
-		// Make sure that we have an additional order-by option "Popularity".
+		// Make sure that we have a additional poprularity order-by options.
 		$this->waitForElementPresent('name=searchResultOrder');
-		$this->assertSelectHasOption('name=searchResultOrder', 'Popularity');
+		$this->assertSelectHasOption('name=searchResultOrder', 'Popularity (All Time)');
+		$this->assertSelectHasOption('name=searchResultOrder', 'Popularity (Last Month)');
 
-		// If we sort by "Popularity" then we expect the result order to reverse.
-		$this->selectAndWait('name=searchResultOrder', "value=popularity");
+		// Check whether we get the expected result orders for "all time" and
+		// "last month" popularity ordering.
+		$this->selectAndWait('name=searchResultOrder', "value=popularityAll");
 		$this->checkRanking(array(4, 3, 2, 1), false);
+		$this->selectAndWait('name=searchResultOrder', "value=popularityMonth");
+		$this->checkRanking(array(3, 4, 2, 1), false);
 	}
 
 
@@ -299,14 +326,17 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 	 * Copy an external ranking file to the Solr server and
 	 * delete the external file cache.
 	 */
-	private function copyTestRankingFile() {
-		// Copy the external ranking test file into the lucene data folder.
-		copy(
-			dirname(__FILE__) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'external_usageMetric.00000000',
-			$this->extFilesDir . 'external_usageMetric.00000000'
-		);
+	private function copyTestRankingFiles() {
+		// Copy the external ranking test files into the lucene data folder.
+		foreach (array('All', 'Month') as $filter) {
+			$fileName = "external_usageMetric$filter.00000000";
+			copy(
+				dirname(__FILE__) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . $fileName,
+				$this->extFilesDir . $fileName
+			);
+		}
 
-		// Make the Lucene server aware of the new file.
+		// Make the Lucene server aware of the new files.
 		$this->verifyAndOpen('http://localhost:8983/solr/ojs/reloadExternalFiles');
 	}
 }

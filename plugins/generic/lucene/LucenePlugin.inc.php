@@ -305,7 +305,7 @@ class LucenePlugin extends GenericPlugin {
 
 					// Boost File Update.
 					} elseif ($request->getUserVar('updateBoostFile')) {
-						$this->_updateBoostFile();
+						$this->_updateBoostFiles();
 
 					// Start/Stop solr server.
 					} elseif ($request->getUserVar('stopServer')) {
@@ -424,7 +424,7 @@ class LucenePlugin extends GenericPlugin {
 
 		// Only show the "popularity" option when sorting-by-metric is enabled.
 		if (!$this->getSetting(0, 'sortingByMetric')) {
-			unset($resultSetOrderingOptions['popularity']);
+			unset($resultSetOrderingOptions['popularityAll'], $resultSetOrderingOptions['popularityMonth']);
 		}
 	}
 
@@ -493,10 +493,10 @@ class LucenePlugin extends GenericPlugin {
 		// Configure ranking-by-metric.
 		$rankingByMetric = (boolean)$this->getSetting(0, 'rankingByMetric');
 		if ($rankingByMetric) {
-			// The 'usageMetric' field is an external file field containing
+			// The 'usageMetricAll' field is an external file field containing
 			// multiplicative boost values calculated from usage metrics and
 			// normalized to values between 0.5 and 2.0.
-			$searchRequest->addBoostField('usageMetric');
+			$searchRequest->addBoostField('usageMetricAll');
 		}
 
 		// Call the solr web service.
@@ -892,10 +892,12 @@ class LucenePlugin extends GenericPlugin {
 	/**
 	 * Generate an external boost file from usage statistics data.
 	 * The file will be empty when an error condition is met.
+	 * @param $timeFilter string Can be one of "all" (all-time statistics) or
+	 *   "month" (last month only).
 	 * @param $output boolean|string When true then write to stdout, otherwise
 	 *   interpret the variable as file name and write to the given file.
 	 */
-	function generateBoostFile($output = true) {
+	function generateBoostFile($timeFilter, $output = true) {
 		// Check error conditions:
 		// - the "ranking/sorting-by-metric" feature is not enabled
 		// - a "main metric" is not configured
@@ -909,6 +911,11 @@ class LucenePlugin extends GenericPlugin {
 		// https://lucene.apache.org/solr/api-3_6_1/org/apache/solr/schema/ExternalFileField.html
 		$column = STATISTICS_DIMENSION_ARTICLE_ID;
 		$filter = array(STATISTICS_DIMENSION_ASSOC_TYPE => array(ASSOC_TYPE_GALLEY, ASSOC_TYPE_ARTICLE));
+		if ($timeFilter == 'month') {
+			$oneMonthAgo = date('Ymd', strtotime('-1 month'));
+			$today = date('Ymd');
+			$filter[STATISTICS_DIMENSION_DAY] = array('from' => $oneMonthAgo, 'to' => $today);
+		}
 		$orderBy = array(STATISTICS_DIMENSION_ARTICLE_ID => STATISTICS_ORDER_ASC);
 		$metricReport = $application->getMetrics($metricType, $column, $filter, $orderBy);
 		if (empty($metricReport)) return;
@@ -1090,7 +1097,7 @@ class LucenePlugin extends GenericPlugin {
 		if ($updateBoostFile) {
 			// Update the boost file.
 			$this->_indexingMessage($log, 'LucenePlugin: ' . __('plugins.generic.lucene.rebuildIndex.updateBoostFile') . ' ... ', $messages);
-			$this->_updateBoostFile();
+			$this->_updateBoostFiles();
 		}
 
 		$this->_indexingMessage($log, __('search.cli.rebuildIndex.done') . PHP_EOL, $messages);
@@ -1182,7 +1189,7 @@ class LucenePlugin extends GenericPlugin {
 	/**
 	 * Generate and update the boost file.
 	 */
-	function _updateBoostFile() {
+	function _updateBoostFiles() {
 		// Make sure that we have an embedded server.
 		if ($this->getSetting(0, 'pullIndexing')) return;
 
@@ -1191,23 +1198,26 @@ class LucenePlugin extends GenericPlugin {
 
 		// Construct the file name.
 		$ds = DIRECTORY_SEPARATOR;
-		$fileName = Config::getVar('files', 'files_dir') . "${ds}lucene${ds}data${ds}external_usageMetric";
 
-		// Find the next extension. We cannot write to the existing file
-		// while it is in-use and locked (on Windows).
-		// Solr lets us write a new file and will always use the
-		// (alphabetically) last file. The older file will automatically
-		// be deleted.
-		$lastExtension = 0;
-		foreach (glob($fileName . '.*') as $source) {
-			$existingExtension = (int)pathinfo($source, PATHINFO_EXTENSION);
-			if ($existingExtension > $lastExtension) $lastExtension = $existingExtension;
+		foreach (array('all', 'month') as $filter) {
+			$fileName = Config::getVar('files', 'files_dir') . "${ds}lucene${ds}data${ds}external_usageMetric" . ucfirst($filter);
+
+			// Find the next extension. We cannot write to the existing file
+			// while it is in-use and locked (on Windows).
+			// Solr lets us write a new file and will always use the
+			// (alphabetically) last file. The older file will automatically
+			// be deleted.
+			$lastExtension = 0;
+			foreach (glob($fileName . '.*') as $source) {
+				$existingExtension = (int)pathinfo($source, PATHINFO_EXTENSION);
+				if ($existingExtension > $lastExtension) $lastExtension = $existingExtension;
+			}
+			$newExtension = (string) $lastExtension + 1;
+			$newExtension = str_pad($newExtension, 8, '0', STR_PAD_LEFT);
+
+			// Generate the files.
+			$this->generateBoostFile($filter, $fileName . '.' . $newExtension);
 		}
-		$newExtension = (string) $lastExtension + 1;
-		$newExtension = str_pad($newExtension, 8, '0', STR_PAD_LEFT);
-
-		// Generate the file.
-		$this->generateBoostFile($fileName . '.' . $newExtension);
 
 		// Make the solr server aware of the boost file.
 		$solr = $this->getSolrWebService();
