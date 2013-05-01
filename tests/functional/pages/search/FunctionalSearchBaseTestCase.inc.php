@@ -186,5 +186,26 @@ class FunctionalSearchBaseTestCase extends WebTestCase {
 			throw $this->improveException($e, "example $searchResultOrder - $searchResultOrderDir");
 		}
 	}
+
+	/**
+	 * Check the "similar documents" feature independently
+	 * of the search implementation.
+	 */
+	protected function checkSimDocs() {
+		// Execute a simple search that returns at least one result.
+		$this->simpleSearch('lucene');
+
+		// Check that the link "similar documents" is present.
+		$this->assertElementPresent('link=similar documents');
+
+		// Click one of the "similar documents" buttons.
+		$this->clickAndWait('css=a.file[href="' . $this->baseUrl . '/index.php/lucene-test/search/similarDocuments?articleId=3"]');
+
+		// Check that a search for similar articles has been executed.
+		$this->waitForLocation('*lucene-test/search/search*');
+		$this->waitForElementPresent('name=query');
+		$this->assertValue('name=query', '*article*');
+		$this->assertValue('name=query', '*test*');
+	}
 }
 ?>

@@ -203,7 +203,14 @@
 								&nbsp;<a href="{url journal=$journal->getPath() page="article" op="view" path=$publishedArticle->getBestArticleId($journal)|to_array:$galley->getBestGalleyId($journal)}" class="file">{$galley->getGalleyLabel()|escape}</a>
 							{/foreach}
 						{/if}
-						{call_hook name="Templates::Search::SearchResults::AdditionalArticleLinks" articleId=$publishedArticle->getId()}
+						{if $simDocsEnabled}
+							{strip}
+								&nbsp;
+								<a href="{url op="similarDocuments" articleId=$publishedArticle->getId()}" class="file">
+									{translate key="search.results.similarDocuments"}
+								</a>
+							{/strip}
+						{/if}
 					</td>
 				</tr>
 				<tr>

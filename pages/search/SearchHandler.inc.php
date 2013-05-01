@@ -160,12 +160,60 @@ class SearchHandler extends Handler {
 		$templateMgr->assign('orderBy', $orderBy);
 		$templateMgr->assign('orderDir', $orderDir);
 
+		// Similar documents.
+		$templateMgr->assign('simDocsEnabled', true);
+
 		// Result set display.
 		$templateMgr->assign('jsLocaleKeys', array('search.noKeywordError'));
 		$this->_assignSearchFilters($request, $templateMgr, $searchFilters);
 		$templateMgr->assign_by_ref('results', $results);
 		$templateMgr->assign('error', $error);
 		$templateMgr->display('search/search.tpl');
+	}
+
+	/**
+	 * Redirect to a search query that shows documents
+	 * similar to the one identified by an article id in the
+	 * request.
+	 * @param $args array
+	 * @param $request Request
+	 */
+	function similarDocuments($args, &$request) {
+		$this->validate(null, $request);
+
+		// Retrieve the (mandatory) ID of the article that
+		// we want similar documents for.
+		$articleId = $request->getUserVar('articleId');
+		if (!is_numeric($articleId)) {
+			$request->redirect(null, 'search');
+		}
+
+		// Check whether a search plugin provides terms for a similarity search.
+		$searchTerms = array();
+		$result = HookRegistry::call('SearchHandler::similarDocuments', array($articleId, &$searchTerms));
+
+		// If no plugin implements the hook then use the subject keywords
+		// of the article for a similarity search.
+		if ($result === false) {
+			// Retrieve the article.
+			$publishedArticleDao = DAORegistry::getDAO('PublishedArticleDAO'); /* @var $publishedArticleDao PublishedArticleDAO */
+			$article = $publishedArticleDao->getPublishedArticleByArticleId($articleId);
+			if (is_a($article, 'PublishedArticle')) {
+				// Retrieve keywords (if any).
+				$searchTerms = $article->getLocalizedSubject();
+				// Tokenize keywords.
+				$searchTerms = trim(preg_replace('/\s+/', ' ', strtr($searchTerms, ',;', '  ')));
+				if (!empty($searchTerms)) $searchTerms = explode(' ', $searchTerms);
+			}
+		}
+
+		// Redirect to a search query with the identified search terms (if any).
+		if (empty($searchTerms)) {
+			$searchParams = null;
+		} else {
+			$searchParams = array('query' => implode(' ', $searchTerms));
+		}
+		$request->redirect(null, 'search', 'search', null, $searchParams);
 	}
 
 	/**

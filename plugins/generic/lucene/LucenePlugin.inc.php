@@ -135,6 +135,7 @@ class LucenePlugin extends GenericPlugin {
 			HookRegistry::register('ArticleSearchIndex::articleDeleted', array(&$this, 'callbackArticleDeleted'));
 			HookRegistry::register('ArticleSearchIndex::articleChangesFinished', array(&$this, 'callbackArticleChangesFinished'));
 			HookRegistry::register('ArticleSearchIndex::rebuildIndex', array(&$this, 'callbackRebuildIndex'));
+			HookRegistry::register('SearchHandler::similarDocuments', array(&$this, 'callbackSimilarDocuments'));
 
 			// Register callbacks (forms).
 			if ($customRanking) {
@@ -153,7 +154,6 @@ class LucenePlugin extends GenericPlugin {
 				HookRegistry::register('Templates::Manager::Sections::SectionForm::AdditionalMetadata', array($this, 'callbackTemplateSectionFormAdditionalMetadata'));
 			}
 			HookRegistry::register('Templates::Search::SearchResults::PreResults', array($this, 'callbackTemplatePreResults'));
-			HookRegistry::register('Templates::Search::SearchResults::AdditionalArticleLinks', array($this, 'callbackTemplateAdditionalArticleLinks'));
 			HookRegistry::register('Templates::Search::SearchResults::AdditionalArticleInfo', array($this, 'callbackTemplateAdditionalArticleInfo'));
 			HookRegistry::register('Templates::Search::SearchResults::SyntaxInstructions', array($this, 'callbackTemplateSyntaxInstructions'));
 
@@ -374,7 +374,6 @@ class LucenePlugin extends GenericPlugin {
 		$publicOps = array(
 			'queryAutocomplete',
 			'pullChangedArticles',
-			'similarDocuments',
 			'usageMetricBoost'
 		);
 		if (!in_array($op, $publicOps)) return;
@@ -669,6 +668,27 @@ class LucenePlugin extends GenericPlugin {
 		return true;
 	}
 
+	/**
+	 * @see SearchHandler::similarDocuments()
+	 */
+	function callbackSimilarDocuments($hookName, $params) {
+		$articleId = $params[0];
+		$searchTerms =& $params[1];
+
+		// Check whether the "similar documents" feature is enabled.
+		if (!$this->getSetting(0, 'simdocs')) {
+			$searchTerms = null;
+			return true;
+		}
+
+		// Identify "interesting" terms of the
+		// given article and return them "by ref".
+		$solrWebService = $this->getSolrWebService();
+		$searchTerms = $solrWebService->getInterestingTerms($articleId);
+
+		return true;
+	}
+
 
 	//
 	// Form hook implementations.
@@ -771,6 +791,11 @@ class LucenePlugin extends GenericPlugin {
 			$templateMgr->assign('instantSearchEnabled', true);
 		}
 
+		// Similar documents.
+		if ($this->getSetting(0, 'simdocs')) {
+			$templateMgr->assign('simDocsEnabled', true);
+		}
+
 		return false;
 	}
 
@@ -799,38 +824,6 @@ class LucenePlugin extends GenericPlugin {
 			array($this->_spellingSuggestionField => $this->_spellingSuggestion)
 		);
 		$output .= $smarty->fetch($this->getTemplatePath() . 'preResults.tpl');
-		return false;
-	}
-
-	/**
-	 * @see templates/search/searchResults.tpl
-	 */
-	function callbackTemplateAdditionalArticleLinks($hookName, $params) {
-		// Check whether the "similar documents" feature is
-		// enabled.
-		if (!$this->getSetting(0, 'simdocs')) return false;
-
-		// Check and prepare the article parameter.
-		$hookParams = $params[0];
-		if (!(isset($hookParams['articleId']) && is_numeric($hookParams['articleId']))) {
-			return false;
-		}
-		$urlParams = array(
-			'articleId' => $hookParams['articleId']
-		);
-
-		// Create a URL that links to "similar documents".
-		$request =& PKPApplication::getRequest();
-		$router =& $request->getRouter();
-		$simdocsUrl = $router->url(
-			$request, null, 'lucene', 'similarDocuments', null, $urlParams
-		);
-
-		// Return a link to the URL (a template seems overkill here).
-		$output =& $params[2];
-		$output .= '&nbsp;<a href="' . $simdocsUrl . '" class="file">'
-			. __('plugins.generic.lucene.results.similarDocuments')
-			. '</a>';
 		return false;
 	}
 

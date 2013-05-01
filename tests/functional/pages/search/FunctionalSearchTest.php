@@ -1,25 +1,22 @@
 <?php
 
 /**
- * @file tests/functional/pages/search/FunctionalSearchSortingByMetricTest.php
+ * @file tests/functional/pages/search/FunctionalSearchTest.php
  *
  * Copyright (c) 2000-2011 John Willinsky
  * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
  *
- * @class FunctionalSearchSortingByMetricTest
+ * @class FunctionalSearchTest
  * @ingroup tests_functional_pages_search
  * @see ArticleSearch
  *
- * @brief Integration/Functional test for the "sorting" and "sorting-by-metric"
- * features of the OJS search.
- *
- * FEATURE: search result set sorting
+ * @brief Integration/Functional test fir the OJS search.
  */
 
 
 import('tests.functional.pages.search.FunctionalSearchBaseTestCase');
 
-class FunctionalSearchSortingByMetricTest extends FunctionalSearchBaseTestCase {
+class FunctionalSearchTest extends FunctionalSearchBaseTestCase {
 
 	//
 	// Implement template methods from WebTestCase
@@ -48,6 +45,8 @@ class FunctionalSearchSortingByMetricTest extends FunctionalSearchBaseTestCase {
 	// Tests
 	//
 	/**
+	 * FEATURE: search result set sorting
+	 *
 	 * SCENARIO OUTLINE: Result ordering
 	 *   GIVEN I am looking at the result page of a {search type}-journal
 	 *         result set for the search phrase {keywords}
@@ -120,6 +119,8 @@ class FunctionalSearchSortingByMetricTest extends FunctionalSearchBaseTestCase {
 	}
 
 	/**
+	 * FEATURE: search result set sorting by usage metric
+	 *
 	 * SCENARIO: sorting by metric effect (all time)
 	 *   GIVEN I simulate a metrics table that establishes the following article
 	 *         order by descending all-time usage statistics:
@@ -198,6 +199,30 @@ class FunctionalSearchSortingByMetricTest extends FunctionalSearchBaseTestCase {
 		$this->refreshAndWait();
 		$this->waitForElementPresent('name=searchResultOrder');
 		$this->checkRanking(array(1, 2, 3, 4), false, 3);
+	}
+
+	/**
+	 * FEATURE: search for similar documents
+	 *
+	 * SCENARIO: propose similar documents
+	 *    WHEN I execute a simple search that returns at
+	 *         least one result
+	 *     AND the result has keywords set
+	 *    THEN The result list will contain a button behind
+	 *         each item of the result list: "similar documents"
+	 *
+	 * SCENARIO: find similar documents
+	 *   GIVEN I executed a simple search that returned at
+	 *         least one result
+	 *     AND I see a "similar documents" button behind one or more
+	 *         item(s) of the result list
+	 *    WHEN I click the "similar documents" button of an item
+	 *    THEN I'll see a result set containing articles containing
+	 *         similar keywords as defined by solr's default
+	 *         similarity algorithm.
+	 */
+	public function testSimilarDocuments() {
+		$this->checkSimDocs();
 	}
 }
 ?>

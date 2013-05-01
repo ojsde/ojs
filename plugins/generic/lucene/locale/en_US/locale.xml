@@ -39,7 +39,6 @@
 	<message key="plugins.generic.lucene.rebuildIndex.updateBoostFile">Updating usage statistics data</message>
 	
 	<message key="plugins.generic.lucene.results.didYouMean">Did you mean</message>
-	<message key="plugins.generic.lucene.results.similarDocuments">similar documents</message>
 	<message key="plugins.generic.lucene.results.syntaxInstructions"><![CDATA[
 		Search tips: <ul>
 			<li>Search terms are case-insensitive</li>
