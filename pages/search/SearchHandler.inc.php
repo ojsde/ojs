@@ -189,23 +189,7 @@ class SearchHandler extends Handler {
 		}
 
 		// Check whether a search plugin provides terms for a similarity search.
-		$searchTerms = array();
-		$result = HookRegistry::call('SearchHandler::similarDocuments', array($articleId, &$searchTerms));
-
-		// If no plugin implements the hook then use the subject keywords
-		// of the article for a similarity search.
-		if ($result === false) {
-			// Retrieve the article.
-			$publishedArticleDao = DAORegistry::getDAO('PublishedArticleDAO'); /* @var $publishedArticleDao PublishedArticleDAO */
-			$article = $publishedArticleDao->getPublishedArticleByArticleId($articleId);
-			if (is_a($article, 'PublishedArticle')) {
-				// Retrieve keywords (if any).
-				$searchTerms = $article->getLocalizedSubject();
-				// Tokenize keywords.
-				$searchTerms = trim(preg_replace('/\s+/', ' ', strtr($searchTerms, ',;', '  ')));
-				if (!empty($searchTerms)) $searchTerms = explode(' ', $searchTerms);
-			}
-		}
+		$searchTerms = ArticleSearch::getSimilarityTerms($articleId);
 
 		// Redirect to a search query with the identified search terms (if any).
 		if (empty($searchTerms)) {

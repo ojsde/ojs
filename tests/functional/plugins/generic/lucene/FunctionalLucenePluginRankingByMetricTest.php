@@ -45,6 +45,9 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'rankingByMetric', false);
 		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'sortingByMetric', false);
 
+		// We have to enable a statistics plugin to test this feature.
+		$pluginSettingsDao->updateSetting(0, 'oasplugin', 'enabled', true);
+
 		// Move existing external field files to a temporary directory.
 		$this->tempDir = tempnam(sys_get_temp_dir(), 'pkp');
 		unlink($this->tempDir);

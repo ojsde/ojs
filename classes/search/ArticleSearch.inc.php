@@ -195,10 +195,16 @@ class ArticleSearch {
 	}
 
 	/**
-	 * See implementation of retrieveResults for a description of this
-	 * function.
+	 * Takes an unordered list of search result data, flattens it, orders it
+	 * and excludes unwanted results.
+	 * @param $unorderedResults array An unordered list of search data (article ID
+	 *   as key and ranking data as values).
+	 * @param $orderBy string One of the values returned by ArticleSearch::getResultSetOrderingOptions();
+	 * @param $orderDir string 'asc' or 'desc', see ArticleSearch::getResultSetOrderingDirectionOptions();
+	 * @param $exclude array A list of article IDs to exclude from the result.
+	 * @return array An ordered and flattened list of article IDs.
 	 */
-	static function &_getSparseArray(&$unorderedResults, $orderBy, $orderDir) {
+	static function &_getSparseArray(&$unorderedResults, $orderBy, $orderDir, $exclude) {
 		// Calculate a well-ordered (unique) score.
 		$resultCount = count($unorderedResults);
 		$i = 0;
@@ -247,6 +253,9 @@ class ArticleSearch {
 			}
 		}
 		foreach ($unorderedResults as $articleId => $data) {
+			// Exclude unwanted IDs.
+			if (in_array($articleId, $exclude)) continue;
+
 			$orderKey = null;
 			switch ($orderBy) {
 				case 'authors':
@@ -490,10 +499,11 @@ class ArticleSearch {
 	 * @param $publishedFrom object Search-from date
 	 * @param $publishedTo object Search-to date
 	 * @param $rangeInfo Information on the range of results to return
+	 * @param $exclude array An array of article IDs to exclude from the result.
 	 * @return VirtualArrayIterator An iterator with one entry per retrieved
 	 *  article containing the article, published article, issue, journal, etc.
 	 */
-	static function &retrieveResults($request, $journal, &$keywords, &$error, $publishedFrom = null, $publishedTo = null, $rangeInfo = null) {
+	static function &retrieveResults($request, $journal, &$keywords, &$error, $publishedFrom = null, $publishedTo = null, $rangeInfo = null, $exclude = array()) {
 		// Pagination
 		if ($rangeInfo && $rangeInfo->isValid()) {
 			$page = $rangeInfo->getPage();
@@ -510,7 +520,7 @@ class ArticleSearch {
 		$totalResults = null;
 		$results = HookRegistry::call(
 			'ArticleSearch::retrieveResults',
-			array(&$journal, &$keywords, $publishedFrom, $publishedTo, $orderBy, $orderDir, $page, $itemsPerPage, &$totalResults, &$error)
+			array(&$journal, &$keywords, $publishedFrom, $publishedTo, $orderBy, $orderDir, $exclude, $page, $itemsPerPage, &$totalResults, &$error)
 		);
 
 		// If no search plug-in is activated then fall back to the
@@ -533,7 +543,7 @@ class ArticleSearch {
 			// where higher is better, indicating the quality of the match.
 			// It is generated here in such a manner that matches with
 			// identical frequency do not collide.
-			$results =& self::_getSparseArray($mergedResults, $orderBy, $orderDir);
+			$results =& self::_getSparseArray($mergedResults, $orderBy, $orderDir, $exclude);
 			$totalResults = count($results);
 
 			// Use only the results for the specified page.
@@ -561,6 +571,35 @@ class ArticleSearch {
 		return $returner;
 	}
 
+	/**
+	 * Identify similarity terms for a given article.
+	 * @param $articleId integer
+	 * @return null|array An array of string keywords or null
+	 *   if some kind of error occurred.
+	 */
+	static function getSimilarityTerms($articleId) {
+		// Check whether a search plugin provides terms for a similarity search.
+		$searchTerms = array();
+		$result = HookRegistry::call('ArticleSearch::getSimilarityTerms', array($articleId, &$searchTerms));
+
+		// If no plugin implements the hook then use the subject keywords
+		// of the article for a similarity search.
+		if ($result === false) {
+			// Retrieve the article.
+			$publishedArticleDao = DAORegistry::getDAO('PublishedArticleDAO'); /* @var $publishedArticleDao PublishedArticleDAO */
+			$article = $publishedArticleDao->getPublishedArticleByArticleId($articleId);
+			if (is_a($article, 'PublishedArticle')) {
+				// Retrieve keywords (if any).
+				$searchTerms = $article->getLocalizedSubject();
+				// Tokenize keywords.
+				$searchTerms = trim(preg_replace('/\s+/', ' ', strtr($searchTerms, ',;', '  ')));
+				if (!empty($searchTerms)) $searchTerms = explode(' ', $searchTerms);
+			}
+		}
+
+		return $searchTerms;
+	}
+
 	static function getIndexFieldMap() {
 		return array(
 			ARTICLE_SEARCH_AUTHOR => 'authors',
@@ -575,11 +614,6 @@ class ArticleSearch {
 		);
 	}
 
-
-
-	//
-	// Private helper methods.
-	//
 	/**
 	 * Return the available options for result
 	 * set ordering.

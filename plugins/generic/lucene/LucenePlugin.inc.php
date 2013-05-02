@@ -135,7 +135,7 @@ class LucenePlugin extends GenericPlugin {
 			HookRegistry::register('ArticleSearchIndex::articleDeleted', array(&$this, 'callbackArticleDeleted'));
 			HookRegistry::register('ArticleSearchIndex::articleChangesFinished', array(&$this, 'callbackArticleChangesFinished'));
 			HookRegistry::register('ArticleSearchIndex::rebuildIndex', array(&$this, 'callbackRebuildIndex'));
-			HookRegistry::register('SearchHandler::similarDocuments', array(&$this, 'callbackSimilarDocuments'));
+			HookRegistry::register('ArticleSearch::getSimilarityTerms', array(&$this, 'callbackGetSimilarityTerms'));
 
 			// Register callbacks (forms).
 			if ($customRanking) {
@@ -434,9 +434,9 @@ class LucenePlugin extends GenericPlugin {
 		assert($hookName == 'ArticleSearch::retrieveResults');
 
 		// Unpack the parameters.
-		list($journal, $keywords, $fromDate, $toDate, $orderBy, $orderDir, $page, $itemsPerPage, $dummy) = $params;
-		$totalResults =& $params[8]; // need to use reference
-		$error =& $params[9]; // need to use reference
+		list($journal, $keywords, $fromDate, $toDate, $orderBy, $orderDir, $exclude, $page, $itemsPerPage) = $params;
+		$totalResults =& $params[9]; // need to use reference
+		$error =& $params[10]; // need to use reference
 
 		// Instantiate a search request.
 		$searchRequest = new SolrSearchRequest();
@@ -448,6 +448,7 @@ class LucenePlugin extends GenericPlugin {
 		$searchRequest->setPage($page);
 		$searchRequest->setItemsPerPage($itemsPerPage);
 		$searchRequest->addQueryFromKeywords($keywords);
+		$searchRequest->setExcludedIds($exclude);
 
 		// Configure alternative spelling suggestions.
 		$spellcheck = (boolean)$this->getSetting(0, 'spellcheck');
@@ -669,17 +670,11 @@ class LucenePlugin extends GenericPlugin {
 	}
 
 	/**
-	 * @see SearchHandler::similarDocuments()
+	 * @see ArticleSearch::getSimilarityTerms()
 	 */
-	function callbackSimilarDocuments($hookName, $params) {
+	function callbackGetSimilarityTerms($hookName, $params) {
 		$articleId = $params[0];
 		$searchTerms =& $params[1];
-
-		// Check whether the "similar documents" feature is enabled.
-		if (!$this->getSetting(0, 'simdocs')) {
-			$searchTerms = null;
-			return true;
-		}
 
 		// Identify "interesting" terms of the
 		// given article and return them "by ref".

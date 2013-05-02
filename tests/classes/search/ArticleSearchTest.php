@@ -133,13 +133,14 @@ class ArticleSearchTest extends PKPTestCase {
 			// Check the parameters passed into the callback.
 			$expectedOrderBy = 'score';
 			$expectedOrderDir = 'desc';
+			$expectedExcludedIds = array();
 			$expectedPage = 1;
 			$expectedItemsPerPage = 20;
 			$expectedTotalResults = 3;
 			$expectedError = '';
 			$expectedParams = array(
 				$journal, $testCase, $testFromDate, $testToDate, $expectedOrderBy, $expectedOrderDir,
-				$expectedPage, $expectedItemsPerPage, $expectedTotalResults,
+				$expectedExcludedIds, $expectedPage, $expectedItemsPerPage, $expectedTotalResults,
 				$expectedError
 			);
 			self::assertEquals($expectedParams, $this->_retrieveResultsParams);
@@ -180,7 +181,7 @@ class ArticleSearchTest extends PKPTestCase {
 		$this->_retrieveResultsParams = $params;
 
 		// Test returning count by-ref.
-		$totalCount =& $params[8];
+		$totalCount =& $params[9];
 		$totalCount = 3;
 
 		// Mock a result set and return it.

@@ -19,7 +19,7 @@
 import('lib.pkp.tests.WebTestCase');
 
 class FunctionalRecommendByAuthorPluginTest extends WebTestCase {
-	private $pluginState;
+	private $pluginStateRBA, $pluginStateOAS;
 
 	//
 	// Implement template methods from WebTestCase
@@ -41,8 +41,10 @@ class FunctionalRecommendByAuthorPluginTest extends WebTestCase {
 		parent::setUp();
 		// Enable the plugin for the lucene-test journal.
 		$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO'); /* @var $pluginSettingsDao PluginSettingsDAO */
-		$this->pluginState = $pluginSettingsDao->getSetting(2, 'recommendbyauthorplugin', 'enabled');
+		$this->pluginStateRBA = $pluginSettingsDao->getSetting(2, 'recommendbyauthorplugin', 'enabled');
+		$this->pluginStateOAS = $pluginSettingsDao->getSetting(2, 'oasplugin', 'enabled');
 		$pluginSettingsDao->updateSetting(2, 'recommendbyauthorplugin', 'enabled', true);
+		$pluginSettingsDao->updateSetting(0, 'oasplugin', 'enabled', true);
 	}
 
 	/**
@@ -52,7 +54,8 @@ class FunctionalRecommendByAuthorPluginTest extends WebTestCase {
 		parent::tearDown();
 		// Restore the plugin state.
 		$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO'); /* @var $pluginSettingsDao PluginSettingsDAO */
-		$pluginSettingsDao->updateSetting(2, 'recommendbyauthorplugin', 'enabled', $this->pluginState);
+		$pluginSettingsDao->updateSetting(2, 'recommendbyauthorplugin', 'enabled', $this->pluginStateRBA);
+		$pluginSettingsDao->updateSetting(0, 'oasplugin', 'enabled', $this->pluginStateOAS);
 	}
 
 	//
@@ -69,7 +72,7 @@ class FunctionalRecommendByAuthorPluginTest extends WebTestCase {
 	 *   GIVEN I am looking at an article page with an article by the
 	 *         test author "Arthur McAutomatic"
 	 *    WHEN I click on the second page
-	 *    THEN I'll se the second page of all articles of that author.
+	 *    THEN I'll see the second page of all articles of that author.
 	 */
 	function testRecommendByAuthorArticleList() {
 		$sampleArticleUrl = $this->baseUrl . '/index.php/lucene-test/article/view/23';

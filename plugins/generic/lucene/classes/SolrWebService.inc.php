@@ -1873,6 +1873,12 @@ class SolrWebService extends XmlWebService {
 		if (is_a($journal, 'Journal')) {
 			$params['fq'][] = 'journal_id:"' . $this->_instId . '-' . $journal->getId() . '"';
 		}
+
+		// Add excluded IDs as a filter query (if set).
+		$excludedIds = $searchRequest->getExcludedIds();
+		if (!empty($excludedIds)) {
+			$params['fq'][] = 'article_id:(-"' . $this->_instId . '-' . implode('" -"' . $this->_instId . '-', $excludedIds) . '")';
+		}
 		return $params;
 	}
 
