@@ -192,7 +192,7 @@ class OasPluginTest extends DatabaseTestCase {
 		$expectedEvent['identifiers'] = array(
 			'other::ojs' => 'ojs:513ccb12cf3a7-j1-i1-ig1'
 		);
-		$expectedEvent['mimeType'] = 'application/octet-stream';
+		$expectedEvent['mimeType'] = 'application/pdf';
 		$oasPlugin = $this->getOasPlugin($expectedEvent);
 		$this->assertFalse($oasPlugin->startUsageEvent($hookname, $args));
 	}

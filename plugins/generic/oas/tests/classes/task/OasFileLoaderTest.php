@@ -40,7 +40,7 @@ class OasFileLoaderTest extends DatabaseTestCase {
 	 * @see PKPTestCase::tearDown()
 	 */
 	protected function tearDown() {
-		$fileLoader = new OasFileLoader();
+		$fileLoader = new OasFileLoader(true);
 		$testFile =  DIRECTORY_SEPARATOR . '2012-11-10_2012-11-10.csv';
 		@unlink($fileLoader->getStagePath() . $testFile);
 		@unlink($fileLoader->getRejectPath() . $testFile);
@@ -53,7 +53,7 @@ class OasFileLoaderTest extends DatabaseTestCase {
 	// Unit tests
 	//
 	public function testFileLoader() {
-		$fileLoader = new OasFileLoader();
+		$fileLoader = new OasFileLoader(true);
 
 		// Install the processing folder structure if necessary.
 		$fileLoader->checkFolderStructure(true);

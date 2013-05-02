@@ -26,10 +26,16 @@ class OasFileLoader extends FileLoader {
 	/** @var PluginSettingsDAO */
 	private $_pluginSettingsDao;
 
+	/** @var boolean */
+	private $_testMode;
+
+
 	/**
 	 * Constructor
 	 */
-	function OasFileLoader() {
+	function OasFileLoader($testMode = false) {
+		$this->_testMode = $testMode;
+
 		// Determine the base folder.
 		$baseFolder = rtrim(Config::getVar('files', 'files_dir'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'oas';
 		$args = array($baseFolder);
@@ -53,7 +59,7 @@ class OasFileLoader extends FileLoader {
 		if (!$this->checkFolderStructure(true)) return false;
 
 		// Download new files from the OA-S server.
-		if (!$this->_stageStatisticsFiles()) return false;
+		if (!($this->_testMode || $this->_stageStatisticsFiles())) return false;
 
 		// Load the files into the database.
 		return parent::execute();
