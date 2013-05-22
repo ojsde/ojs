@@ -147,7 +147,7 @@ class FunctionalSearchBaseTestCase extends WebTestCase {
 	protected function checkRanking($expectedRanking, $searchFirst = true, $rowOffset = 4) {
 		// Execute a search that shows four articles and check that
 		// they are presented in the expected order.
-		$weightedSearch = '+ranking +("article 1"^1.5 "article 2"^1.3 "article 3" "article 4")';
+		$weightedSearch = '+ranking +("article 1"^1.2 "article 2"^1.2 "article 3" "article 4")';
 		if ($searchFirst) $this->simpleSearch($weightedSearch);
 		$row = 3; // The first table row containing an article.
 		foreach ($expectedRanking as $currentArticle) {

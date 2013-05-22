@@ -495,7 +495,7 @@ class LucenePlugin extends GenericPlugin {
 		if ($rankingByMetric) {
 			// The 'usageMetricAll' field is an external file field containing
 			// multiplicative boost values calculated from usage metrics and
-			// normalized to values between 0.5 and 2.0.
+			// normalized to values between 1.0 and 2.0.
 			$searchRequest->addBoostField('usageMetricAll');
 		}
 
@@ -925,12 +925,10 @@ class LucenePlugin extends GenericPlugin {
 		// Normalize and return the metric values.
 		// NB: We do not return values for articles that have no data.
 		foreach ($metricReport as $reportRow) {
-			// The normalization function is: 2 ^ ((2 * metric / max) - 1).
-			// This normalizes the metric symmetrically around half the max value
-			// to values between 0.5 and 2.0, i.e. half the max value is normalized
-			// to 1.0, zero is normalized to 0.5 and the max value becomes 2.0.
+			// The normalization function is: 2 ^ (metric / max).
+			// This normalizes the metric to values between 1.0 and 2.0.
 			$record = $instId . '-' . $reportRow['article_id'] . '=' .
-					round(pow(2, (2 * $reportRow['metric'] / $max) - 1), 5) . PHP_EOL;
+					round(pow(2, $reportRow['metric'] / $max), 5) . PHP_EOL;
 			if (is_null($file)) {
 				echo $record;
 			} else {

@@ -105,15 +105,14 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 	 * EXAMPLES:
 	 *   time span | file with boost data
 	 *   ==========|=====================================================
-	 *   month     | test-inst-1: no entry (i.e. defaults to 0.5 in Solr)
-	 *             | test-inst-2=0.7937
-	 *             | test-inst-3=1
+	 *   month     | test-inst-1: no entry (i.e. defaults to 1.0 in Solr)
+	 *             | test-inst-2=1.25992
+	 *             | test-inst-3=1.41421
 	 *             | test-inst-4=2
 	 *   all       | test-inst-1=2
-	 *             | test-inst-2=0.70711
-	 *             | test-inst-3=0.8409
-	 *             | test-inst-4=1.41421
-	 * @group current
+	 *             | test-inst-2=1.18921
+	 *             | test-inst-3=1.29684
+	 *             | test-inst-4=1.68179
 	 */
 	function testGenerateExternalBoostFile() {
 		// Prepare the metrics table.
@@ -154,12 +153,14 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'rankingByMetric', true);
 		$pluginSettingsDao->updateSetting(0, 'luceneplugin', 'pullIndexing', true);
 
-		// Check the boost files.
+		// Check the "all time" boost file.
 		$response = curl_exec($curlCh);
-		$this->assertEquals("test-inst-9=2\ntest-inst-10=0.70711\ntest-inst-11=0.8409\ntest-inst-12=1.41421\n", $response);
+		$this->assertEquals("test-inst-9=2\ntest-inst-10=1.18921\ntest-inst-11=1.29684\ntest-inst-12=1.68179\n", $response);
+
+		// Check "last month"'s boost file.
 		curl_setopt($curlCh, CURLOPT_URL, $handlerUrl . 'month');
 		$response = curl_exec($curlCh);
-		$this->assertEquals("test-inst-10=0.7937\ntest-inst-11=1\ntest-inst-12=2\n", $response);
+		$this->assertEquals("test-inst-10=1.25992\ntest-inst-11=1.41421\ntest-inst-12=2\n", $response);
 	}
 
 	/**
@@ -206,9 +207,9 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 		// Prepare "new" test ranking data in the metrics table.
 		$metricsDao = DAORegistry::getDAO('MetricsDAO'); /* @var $metricsDao MetricsDAO */
 		$metricsDao->retrieve('TRUNCATE TABLE metrics');
-		$records = array(                            // article 3: no record, defaults to boost 1.0
+		$records = array(                            // article 2: no record, defaults to boost 1.0
 				array('assoc_id' => 9, 'metric' => 15), // article 1: 10 usage events
-				array('assoc_id' => 10, 'metric' => 5), // article 2: 15 usage events
+				array('assoc_id' => 11, 'metric' => 5), // article 3: 5 usage events
 				array('assoc_id' => 12, 'metric' => 30)  // article 4: 30 usage events
 		);
 		foreach ($records as $record) {
@@ -235,13 +236,13 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 	 *     AND I executed a search that shows four articles with ranking
 	 *         weights such that their ranking is uniquely defined as
 	 *         1) "article 1", 2) "article 2", 3) "article 3", 4) "article 4"
-	 *         [e.g. '+ranking +("article 1"^1.5 "article 2"^1.3 "article 3"^1.1
+	 *         [e.g. '+ranking +("article 1"^1.2 "article 2"^1.2 "article 3"
 	 *         "article 4")']
 	 *     AND I place a external ranking file into the lucene index folder
 	 *         with the following metric boost data:
-	 *           article 1: 0.5
-	 *           article 2: 1 (no explicit data - via default value)
-	 *           article 3: 1.2
+	 *           article 1: 1 (no explicit data - via default value)
+	 *           article 2: 1.1
+	 *           article 3: 1.5
 	 *           article 4: 2
 	 *    WHEN I enable the ranking-by-metric feature
 	 *     AND I re-execute the exact same search
@@ -277,7 +278,7 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 	 *     AND I placed an external ranking file into the lucene index
 	 *         folder that establishes a well-ordered {ranking order}
 	 *     AND I executed a search that does not order articles by metric
-	 *         [e.g. '+ranking +("article 1"^1.5 "article 2"^1.3 "article 3"^1.1
+	 *         [e.g. '+ranking +("article 1"^1.2 "article 2"^1.2 "article 3"
 	 *         "article 4")']
 	 *    WHEN I select the "Popularity ({time filter})" order-by option
 	 *    THEN the result will be re-ordered (default: descending order) by the
@@ -287,7 +288,7 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 	 *   time filter | ranking order
 	 *   ============|===========================================
 	 *   All Time    | article 4, article 3, article 2, article 1
-	 *   Last Month  | article 3, article 4, article 2, article 1
+	 *   Last Month  | article 3, article 4, article 1, article 2
 	 */
 	function testSortingByMetric() {
 		// Execute a search (not influenced by statistics).
@@ -318,7 +319,7 @@ class FunctionalLucenePluginRankingByMetricTest extends FunctionalLucenePluginBa
 		$this->selectAndWait('name=searchResultOrder', "value=popularityAll");
 		$this->checkRanking(array(4, 3, 2, 1), false);
 		$this->selectAndWait('name=searchResultOrder', "value=popularityMonth");
-		$this->checkRanking(array(3, 4, 2, 1), false);
+		$this->checkRanking(array(3, 4, 1, 2), false);
 	}
 
 

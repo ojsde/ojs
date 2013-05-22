@@ -67,7 +67,7 @@ class FunctionalSearchTest extends FunctionalSearchBaseTestCase {
 	 *   single      | chicken AND (wings OR feet) | article title    | ascending (default)  | 5
 	 *   single      | chicken AND (wings OR feet) | article title    | descending           | 4
 	 *   multi       | test NOT ranking            | issue publ. date | descending (default) | 3 or 4
-	 *   multi       | test NOT ranking            | journal title    | ascending (default)  | 3
+	 *   multi       | test NOT ranking            | journal title    | ascending (default)  | 3 or 4
 	 *   multi       | test NOT ranking            | journal title    | descending           | 1
 	 *
 	 * SCENARIO: Journal title ordering: single-journal search
@@ -105,7 +105,7 @@ class FunctionalSearchTest extends FunctionalSearchBaseTestCase {
 		// Test ordering of a multi-journal search.
 		$multiJournalExamples = array(
 			array('searchResultOrder', 'issuePublicationDate', array(3, 4)), // Default: descending
-			array('searchResultOrder', 'journalTitle', 3), // Default: ascending
+			array('searchResultOrder', 'journalTitle', array(3, 4)), // Default: ascending
 			array('searchResultOrderDir', 'desc', 1)
 		);
 		$this->simpleSearchAcrossJournals('test NOT ranking');
@@ -146,6 +146,10 @@ class FunctionalSearchTest extends FunctionalSearchBaseTestCase {
 	 *         order established in the ranking file, i.e. article 4, 3, 2, 1.
 	 */
 	function testSortingByMetric() {
+		// We have to enable a statistics plugin to test this feature.
+		$pluginSettingsDao =& DAORegistry::getDAO('PluginSettingsDAO'); /* @var $pluginSettingsDao PluginSettingsDAO */
+		$pluginSettingsDao->updateSetting(0, 'oasplugin', 'enabled', true);
+
 		// Prepare the metrics table.
 		// NB: We actually map the Gherkin article IDs to "real" article IDs
 		// to make sure that the metrics DAO can handle them.
